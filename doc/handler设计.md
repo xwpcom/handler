@@ -26,10 +26,16 @@
 
 - 不要再采用windows特有的BYTE,DWORD类型，全部采用c++11标准的uint8_t,int32_t之类
 - 采用cmake来管理项目,能在cmake中启用/禁用某个功能
+- 函数命名统一采用onCreate样式
 - 所有接口都采用unit test
 - handler不要再用深度集成proc,而是提供一个类，在需要时由子类自行处理
 - 在windows上不再直接处理iocp,而是采用wepoll，即只需要按linux epoll来处理网络
 - 大量使用lambda,现在哪怕是在keil中m0,m4项目也支持c++11或更高版本
+- 支持x64和x86
+- 支持utf8
+- file读写支持大文件(>4GB)
+- http设计改进
+- 日志采用stream样式
 
 
 

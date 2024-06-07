@@ -104,11 +104,12 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>.;../libhandler/inc;../libhandler/src;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;../libhandler/inc;../libhandler/src;C:\tools\Visual Leak Detector\include;..\depends\gtest\include;..\depends\gtest;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>C:\tools\Visual Leak Detector\lib\win64;</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -129,18 +130,33 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\libhandler\src\handler.h" />
+    <ClInclude Include="..\libhandler\src\handlerinternaldata.h" />
     <ClInclude Include="..\libhandler\src\libhandler.h" />
     <ClInclude Include="..\libhandler\src\log.h" />
+    <ClInclude Include="..\libhandler\src\loop.h" />
     <ClInclude Include="..\libhandler\src\looper.h" />
+    <ClInclude Include="..\libhandler\src\looperinternaldata.h" />
+    <ClInclude Include="..\libhandler\src\object.h" />
+    <ClInclude Include="..\libhandler\src\pch.h" />
+    <ClInclude Include="..\libhandler\src\profiler.h" />
+    <ClInclude Include="..\libhandler\src\system.h" />
+    <ClInclude Include="..\libhandler\src\timerextrainfo.h" />
+    <ClInclude Include="..\libhandler\src\timermanager.h" />
+    <ClInclude Include="..\libhandler\src\timernode.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="libhandler.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\depends\gtest\src\gtest-all.cc" />
     <ClCompile Include="..\libhandler\src\handler.cpp" />
     <ClCompile Include="..\libhandler\src\log.cpp" />
     <ClCompile Include="..\libhandler\src\looper.cpp" />
+    <ClCompile Include="..\libhandler\src\profiler.cpp" />
+    <ClCompile Include="..\libhandler\src\system.cpp" />
+    <ClCompile Include="..\libhandler\src\timermanager.cpp" />
+    <ClCompile Include="handler.test.cpp" />
     <ClCompile Include="libhandler.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -152,6 +168,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\libhandler\src\libhandler.inl" />
+    <None Include="..\libhandler\src\message.inl" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\doc\todo.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
