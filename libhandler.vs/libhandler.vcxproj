@@ -129,17 +129,24 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\libhandler\src\bytebuffer.h" />
+    <ClInclude Include="..\libhandler\src\bytetool.h" />
+    <ClInclude Include="..\libhandler\src\event.h" />
     <ClInclude Include="..\libhandler\src\handler.h" />
     <ClInclude Include="..\libhandler\src\handlerinternaldata.h" />
     <ClInclude Include="..\libhandler\src\libhandler.h" />
     <ClInclude Include="..\libhandler\src\log.h" />
+    <ClInclude Include="..\libhandler\src\loger.h" />
+    <ClInclude Include="..\libhandler\src\loghandler_dt.h" />
     <ClInclude Include="..\libhandler\src\loop.h" />
     <ClInclude Include="..\libhandler\src\looper.h" />
     <ClInclude Include="..\libhandler\src\looperinternaldata.h" />
     <ClInclude Include="..\libhandler\src\object.h" />
     <ClInclude Include="..\libhandler\src\pch.h" />
     <ClInclude Include="..\libhandler\src\profiler.h" />
+    <ClInclude Include="..\libhandler\src\stringtool.h" />
     <ClInclude Include="..\libhandler\src\system.h" />
+    <ClInclude Include="..\libhandler\src\timems.h" />
     <ClInclude Include="..\libhandler\src\timerextrainfo.h" />
     <ClInclude Include="..\libhandler\src\timermanager.h" />
     <ClInclude Include="..\libhandler\src\timernode.h" />
@@ -150,11 +157,18 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\depends\gtest\src\gtest-all.cc" />
+    <ClCompile Include="..\libhandler\src\bytebuffer.cpp" />
+    <ClCompile Include="..\libhandler\src\bytetool.cpp" />
+    <ClCompile Include="..\libhandler\src\event.cpp" />
     <ClCompile Include="..\libhandler\src\handler.cpp" />
     <ClCompile Include="..\libhandler\src\log.cpp" />
+    <ClCompile Include="..\libhandler\src\loger.cpp" />
+    <ClCompile Include="..\libhandler\src\loghandler_dt.cpp" />
     <ClCompile Include="..\libhandler\src\looper.cpp" />
     <ClCompile Include="..\libhandler\src\profiler.cpp" />
+    <ClCompile Include="..\libhandler\src\stringtool.cpp" />
     <ClCompile Include="..\libhandler\src\system.cpp" />
+    <ClCompile Include="..\libhandler\src\timems.cpp" />
     <ClCompile Include="..\libhandler\src\timermanager.cpp" />
     <ClCompile Include="handler.test.cpp" />
     <ClCompile Include="libhandler.cpp" />

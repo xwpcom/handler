@@ -72,6 +72,27 @@
     <ClInclude Include="..\libhandler\src\system.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\libhandler\src\loger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libhandler\src\loghandler_dt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libhandler\src\bytebuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libhandler\src\bytetool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libhandler\src\event.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libhandler\src\stringtool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libhandler\src\timems.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="libhandler.cpp">
@@ -99,6 +120,27 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="handler.test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libhandler\src\loger.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libhandler\src\loghandler_dt.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libhandler\src\bytebuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libhandler\src\bytetool.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libhandler\src\event.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libhandler\src\stringtool.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libhandler\src\timems.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

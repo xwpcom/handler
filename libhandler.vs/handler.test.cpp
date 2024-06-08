@@ -1,5 +1,6 @@
 ﻿#include "pch.h"
 #include <future>
+#include "loger.h"
 
 #define CATCH_CONFIG_MAIN
 #include "catch2.hpp"
@@ -53,7 +54,7 @@ TEST_CASE("Thread") {
 	thread t1(loop1);
 	thread t2(f);
 
-	async(launch::async, []() {
+	auto ret=async(launch::async, []() {
 		printf("hello\r\n");
 		  });
 	Sleep(1000);
@@ -62,4 +63,30 @@ TEST_CASE("Thread") {
 
 	
 	
+}
+
+TEST_CASE("event") {
+	class Loop
+	{
+	public:
+		string mTag;
+		void operator()()
+		{
+			logV(mTag)<<__func__;
+			logW(mTag) << "hello";
+
+		}
+	};
+
+	Loop t1;
+	t1.mTag = "t1";
+
+	Loop t2;
+	t2.mTag = "t2";
+
+	thread obj(t1);
+	obj.join();
+
+	thread obj2(t2);
+	obj2.join();
 }

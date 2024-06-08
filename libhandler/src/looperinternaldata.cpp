@@ -1,4 +1,4 @@
-#include "stdafx.h"
+ï»¿#include "pch.h"
 #include "handlerinternaldata.h"
 #include "looperinternaldata.h"
 #include "looper.h"
@@ -22,11 +22,11 @@ tagLooperInternalData::~tagLooperInternalData()
 {
 
 }
-//Çå³ı¹ıÊ±µÄHandlers
-//¼ì²â»úÖÆ:
-//ÓÃweak_ptrÒıÓÃmDestroyedHandlersÖĞ»º´æµÄshared_ptr
-//Çå³ımDestroyedHandlersÖĞµÄshared_ptr
-//È»ºó¼ì²éweak_ptr.lock(),Èç¹ûlockÎªnull±íÊ¾handlerÒÑÎö¹¹£¬·ñÔòÒªÖØĞÂÌí¼Óµ½mDestroyedHandlersÖĞ
+//æ¸…é™¤è¿‡æ—¶çš„Handlers
+//æ£€æµ‹æœºåˆ¶:
+//ç”¨weak_ptrå¼•ç”¨mDestroyedHandlersä¸­ç¼“å­˜çš„shared_ptr
+//æ¸…é™¤mDestroyedHandlersä¸­çš„shared_ptr
+//ç„¶åæ£€æŸ¥weak_ptr.lock(),å¦‚æœlockä¸ºnullè¡¨ç¤ºhandlerå·²ææ„ï¼Œå¦åˆ™è¦é‡æ–°æ·»åŠ åˆ°mDestroyedHandlersä¸­
 void tagLooperInternalData::gc()
 {
 	//ASSERT(IsMyselfThread());
@@ -42,32 +42,32 @@ void tagLooperInternalData::gc()
 				auto item = iter;
 				++iter;
 
-				if (item->second.use_count() != 1)//ÕâÀïÓĞÆäËûlooperÓĞ¾ºÕùÒ²Ã»ÓĞ¹ØÏµ£¬ÏÂÃæµÄlock»á×îÖÕÅĞ¶Ï
+				if (item->second.use_count() != 1)//è¿™é‡Œæœ‰å…¶ä»–looperæœ‰ç«äº‰ä¹Ÿæ²¡æœ‰å…³ç³»ï¼Œä¸‹é¢çš„lockä¼šæœ€ç»ˆåˆ¤æ–­
 				{
 					continue;
 				}
 			}
 
 			//XiongWanPing 2018.07.27
-			//ÕâÀïÓĞ¾ºÕù¹ØÏµ£¬¿ÉÄÜµ¼ÖÂÔÚÆäËûthreadÖĞÎö¹¹handler,ÃèÊöÈçÏÂ:
-			//µ±ÉÏÃæµÄuse_count=1Ê±ÔËĞĞµ½´Ë£¬È»ºócpuÇĞ»»µ½ÁíÒ»thread,ÔÚÁíÒ»threadÖĞweakptr lockµÃµ½shared_ptr
-			//È»ºóÇĞ»»µ½±¾threadÖ´ĞĞitems[key] = nullptr;
-			//È»ºóÔÙÇĞ»»µ½ÁíÒ»threadÎö¹¹shared_ptr²ÅÔÙÇĞ»Øµ½±¾thread
-			//¸Ğ¾õÕâÖÖÊ±ĞòÖ»ÔÚÀíÂÛÉÏ´æÔÚ£¬Êµ¼ÊÉÏ»ù±¾²»»áÓöµ½
-			//ÓÃtest state¹ÊÒâ¹¹ÔìÊ±Ğò
+			//è¿™é‡Œæœ‰ç«äº‰å…³ç³»ï¼Œå¯èƒ½å¯¼è‡´åœ¨å…¶ä»–threadä¸­ææ„handler,æè¿°å¦‚ä¸‹:
+			//å½“ä¸Šé¢çš„use_count=1æ—¶è¿è¡Œåˆ°æ­¤ï¼Œç„¶åcpuåˆ‡æ¢åˆ°å¦ä¸€thread,åœ¨å¦ä¸€threadä¸­weakptr lockå¾—åˆ°shared_ptr
+			//ç„¶ååˆ‡æ¢åˆ°æœ¬threadæ‰§è¡Œitems[key] = nullptr;
+			//ç„¶åå†åˆ‡æ¢åˆ°å¦ä¸€threadææ„shared_ptræ‰å†åˆ‡å›åˆ°æœ¬thread
+			//æ„Ÿè§‰è¿™ç§æ—¶åºåªåœ¨ç†è®ºä¸Šå­˜åœ¨ï¼Œå®é™…ä¸ŠåŸºæœ¬ä¸ä¼šé‡åˆ°
+			//ç”¨test stateæ•…æ„æ„é€ æ—¶åº
 #ifdef _CONFIG_TEST_CROSS_LOOPER_WEAK_PTR_LOCK
 			LooperImpl::SetTestState(eTestState_0);
 
-			//ÈÃTestLooper weak_ptr.lock()
-			//È»ºóÔÚTestLooperÖĞSetTestState(eTestState_1)
+			//è®©TestLooper weak_ptr.lock()
+			//ç„¶ååœ¨TestLooperä¸­SetTestState(eTestState_1)
 			while (LooperImpl::GetTestState() == eTestState_0)
 			{
 				ShellTool::Sleep(1);
 			}
 #endif
 			
-			auto handlerData = items[key]->mInternalData;//±£Ö¤handler dataÔÚÔ­ÉúlooperÖĞÎö¹¹
-			items[key] = nullptr;//Èç¹ûÃ»ÓĞÍâ²¿ÒıÓÃ£¬´ËÊ±handler»áÎö¹¹
+			auto handlerData = items[key]->mInternalData;//ä¿è¯handler dataåœ¨åŸç”Ÿlooperä¸­ææ„
+			items[key] = nullptr;//å¦‚æœæ²¡æœ‰å¤–éƒ¨å¼•ç”¨ï¼Œæ­¤æ—¶handlerä¼šææ„
 
 #ifdef _CONFIG_TEST_CROSS_LOOPER_WEAK_PTR_LOCK
 			LooperImpl::SetTestState(eTestState_2);
@@ -79,16 +79,16 @@ void tagLooperInternalData::gc()
 			auto obj = handler.lock();
 			if (obj)
 			{
-				//ÓĞÍâ²¿ÒıÓÃ
+				//æœ‰å¤–éƒ¨å¼•ç”¨
 				items[key] = obj;
 				obj->OnPrepareDestructor();
 			}
 			else
 			{
-				//handlerÒÑÎö¹¹
+				//handlerå·²ææ„
 				items.erase(key);
 				handlerData->mHandler = nullptr;
-				handlerData->RemoveAllTimer();//ÏÔÊ½Çå³ıËùÓĞtimer
+				handlerData->RemoveAllTimer();//æ˜¾å¼æ¸…é™¤æ‰€æœ‰timer
 			}
 		}
 	}
