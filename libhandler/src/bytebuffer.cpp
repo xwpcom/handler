@@ -275,9 +275,9 @@ int ByteBuffer::MakeSureEndWithNull()
 int ByteBuffer::AppendHex(const string& hex, bool makeSureEndNull)
 {
 	ByteBuffer buf;
-	buf.PrepareBuf(hex.length());
+	buf.PrepareBuf((int)hex.length());
 	ByteTool::HexCharToByte(hex.c_str(), buf.GetNewDataPointer(), buf.GetFreeSize());
-	buf.WriteDirect(hex.length() / 2);
+	buf.WriteDirect((int)hex.length() / 2);
 	return Append(buf, makeSureEndNull);
 }
 
@@ -316,7 +316,7 @@ int ByteBuffer::ReadLine(string& line)
 		auto pEnd = strstr(p, "\n");
 		if (pEnd)
 		{
-			int len = pEnd - p;
+			int len = (int)(pEnd - p);
 			line = string(p, len);
 			//DV("[%s]", line.c_str());
 			Eat(len + 1);

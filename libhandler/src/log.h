@@ -1,10 +1,6 @@
-#pragma once
+﻿#pragma once
 
 namespace Bear {
 
-class Log
-{
-
-};
 
 }

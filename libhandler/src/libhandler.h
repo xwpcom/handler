@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <string>
 #include <vector>
 #include <map>
@@ -7,7 +7,6 @@
 
 namespace Bear {
 using namespace std;
-typedef int32_t Timer_t;
 
 
 }

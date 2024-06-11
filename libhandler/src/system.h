@@ -7,5 +7,6 @@ int64_t tickCount();
 int currentPid();
 int currentTid();
 tagTimeMs currentTimeMs();
+int lastError();
 
 }

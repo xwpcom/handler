@@ -47,7 +47,7 @@ public:
 
 	virtual void* GetLooperHandle()const = 0;
 
-	virtual int Wakeup() = 0;
+	virtual int wakeup() = 0;
 	virtual int64_t tick()const = 0;
 protected:
 	virtual bool CanQuitLooperNow() = 0;

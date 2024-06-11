@@ -129,6 +129,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\depends\wepoll\wepoll.h" />
     <ClInclude Include="..\libhandler\src\bytebuffer.h" />
     <ClInclude Include="..\libhandler\src\bytetool.h" />
     <ClInclude Include="..\libhandler\src\event.h" />

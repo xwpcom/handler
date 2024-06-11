@@ -2,6 +2,7 @@
 #include "object.h"
 
 namespace Bear {
+typedef int32_t Timer_t;
 
 //约定:
 //采用LOOPER_SAFE修饰的接口可以安全的跨looper调用
@@ -21,7 +22,7 @@ class Handler :public Object
 	friend class Looper_Linux;
 	friend class TimerManager;
 	friend class tagHandlerInternalData;
-
+	friend class SmartTlsLooper;
 public:
 	Handler();
 	virtual ~Handler();
@@ -36,9 +37,11 @@ public:
 	virtual void syncSend(function<void>()) {}
 	virtual Timer_t setTimer(Timer_t& id, uint32_t ms) { return 0; }
 	virtual void killTimer(Timer_t& id) {}
+	bool LOOPER_SAFE isSelfThread()const;
 protected:
 	virtual void onCreate();
 	virtual void onDestroy();
+	int64_t onMessage(uint32_t msg, int64_t wp, int64_t lp);
 	virtual void onTimer(Timer_t id) {}
 
 	bool isCreated()const;
@@ -48,6 +51,8 @@ protected:
 
 	void* operator new(size_t) = delete; //disable new,please use make_shared
 	typedef int64_t* (Handler::* PFN_OnMessage)(int64_t* wp, int64_t* lp);
+
+	string mTag="handler";
 };
 
 }

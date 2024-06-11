@@ -1,8 +1,10 @@
 ﻿#include "pch.h"
 #include "loger.h"
 #include "loghandler_dt.h"
+#include <chrono>
 
 namespace Bear {
+using namespace std;
 static const char* TAG = "loger";
 
 int gettimeofday(struct timeval* tp, void* tzp) {

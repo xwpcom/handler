@@ -3,6 +3,8 @@
 #include "bytebuffer.h"
 #if defined _MSC_VER
 #include<windows.h>
+#include "system.h"
+
 namespace Bear {
 
 LogHandler_DT::LogHandler_DT()

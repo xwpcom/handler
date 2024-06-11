@@ -1,11 +1,19 @@
 ﻿#include "pch.h"
 #include <future>
 #include "loger.h"
+#include "looper.h"
+
+#include <iostream>                // cout
+#include <thread>                // thread
+#include <mutex>                // mutex, unique_lock
+#include <condition_variable>
+
 
 #define CATCH_CONFIG_MAIN
 #include "catch2.hpp"
 
 using namespace Bear;
+static const char* TAG = "test";
 
 class Break
 {
@@ -19,12 +27,11 @@ static Break gBreak;
 
 TEST_CASE("Handler") {
 
-	class MainLooper :public AppLooper
+	class AppLooper :public MainLooper
 	{
-
 	};
 
-	make_shared<MainLooper>()->start();
+	make_shared<AppLooper>()->start();
 
 	//REQUIRE(2 == 1);
 }
@@ -60,33 +67,114 @@ TEST_CASE("Thread") {
 	Sleep(1000);
 	t1.join();
 	t2.join();
-
-	
-	
 }
 
-TEST_CASE("event") {
+TEST_CASE("condition_variable") {
 	class Loop
 	{
 	public:
 		string mTag;
+		shared_ptr<mutex> mCS;
+		shared_ptr<condition_variable> mEvent;
 		void operator()()
 		{
-			logV(mTag)<<__func__;
-			logW(mTag) << "hello";
+			if (mTag == "t1")
+			{
+				//logV(mTag) << __func__<<" lock#begin";
+				//unique_lock<mutex> lock(*mCS);
+				//logV(mTag) << __func__ << " lock#end";
+				Sleep(1 * 1000);
+				logV(mTag) << __func__ << " notify#begin";
+				mEvent->notify_one();
+				logV(mTag) << __func__ << " notify#end";
+			}
+			else if (mTag == "t2")
+			{
+				logV(mTag) << __func__ << " lock#begin";
+				unique_lock<mutex> lock(*mCS);
+				logV(mTag) << __func__ << " lock#end";
+
+				logV(mTag) << "wait for event#begin";
+				mEvent->wait(lock);
+				logV(mTag) << "wait for event#end";
+			}
+		}
+	};
+
+	auto cs=make_shared<mutex>();
+	auto evt=make_shared<condition_variable>();
+
+	Loop t1;
+	t1.mCS = cs;
+	t1.mTag = "t1";
+	t1.mEvent = evt;
+
+	Loop t2;
+	t2.mCS = cs;
+	t2.mTag = "t2";
+	t2.mEvent = evt;
+
+	thread obj(t1);
+	thread obj2(t2);
+
+	obj.join();
+	obj2.join();
+}
+
+TEST_CASE("mutex")
+{
+	static const char* TAG = "mutex";
+
+	auto cs = make_shared<mutex>();
+	auto evt = make_shared<condition_variable>();
+
+
+	class Task
+	{
+		int mId = 0;
+	public:
+		shared_ptr<mutex> mCS;
+		void operator()(int id) {
+			{
+				logV(TAG) << "id=" << id<<" try lock";
+				unique_lock <mutex> lck(*mCS);
+				logV(TAG) << "id=" << id << " locked";
+			}
 
 		}
 	};
 
-	Loop t1;
-	t1.mTag = "t1";
+	Task items[10];
+	thread threads[10];
+	// spawn 10 threads:
+	for (int i = 0; i < 10; ++i)
+	{
+		auto t = items[i];
+		t.mCS = cs;
+		threads[i] = thread(t, i);
+	}
 
-	Loop t2;
-	t2.mTag = "t2";
+	for (auto& th : threads)
+		th.join();
+}
 
-	thread obj(t1);
-	obj.join();
+TEST_CASE("Looper") {
 
-	thread obj2(t2);
-	obj2.join();
+	class AppLooper :public MainLooper
+	{
+
+	};
+
+	string mTag = "looper";
+
+	auto obj = make_shared<AppLooper>();
+	obj->create([mTag]() {
+		logV(mTag) << "onCreate";
+				}).start();
+
+	{
+		Looper obj;
+		obj.start();
+	}
+
 }

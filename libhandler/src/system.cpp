@@ -25,4 +25,9 @@ int currentTid()
 	return (int)GetCurrentThreadId();
 }
 
+int lastError()
+{
+	return GetLastError();
+}
+
 }
