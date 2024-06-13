@@ -60,10 +60,10 @@
     <ClInclude Include="..\libhandler\src\timernode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\libhandler\src\handlerinternaldata.h">
+    <ClInclude Include="..\libhandler\src\handlerdata.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\libhandler\src\looperinternaldata.h">
+    <ClInclude Include="..\libhandler\src\looperdata.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\libhandler\src\profiler.h">
@@ -144,6 +144,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\libhandler\src\timems.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libhandler\src\handlerdata.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

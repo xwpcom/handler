@@ -1,11 +1,12 @@
 ﻿#pragma once
 #include <stdint.h>
 #include <list>
-#include "handler.h"
+//#include "handler.h"
 #include "timernode.h"
-#if 0
+#if 1
 namespace Bear {
 
+class Handler;
 struct tagWheel;
 
 //XiongWanPing 2016.07.04
@@ -14,30 +15,30 @@ class TimerManager
 public:
 	TimerManager();
 	virtual ~TimerManager();
-	int ProcessTimer(uint32_t& cmsDelayNext,int64_t tick);
+	int processTimer(uint32_t& cmsDelayNext,int64_t tick);
 	void clearCacheTick();
 
-	int setTimer(std::shared_ptr<Handler>handler, long timerId, int32_t interval, std::shared_ptr<tagTimerExtraInfo> extraInfo = nullptr);
-	void killTimer(std::shared_ptr<Handler>handler, long& timerId);
+	Timer_t setTimer(shared_ptr<Handler>handler, Timer_t timerId, uint32_t interval, shared_ptr<tagTimerExtraInfo> extraInfo = nullptr);
+	void killTimer(shared_ptr<Handler>handler, Timer_t& timerId);
 
-	int setTimer(Handler *handler, long timerId, int32_t interval, std::shared_ptr<tagTimerExtraInfo> extraInfo = nullptr);
-	void killTimer(Handler *handler, long& timerId);
+	Timer_t setTimer(Handler *handler, Timer_t timerId, uint32_t interval, shared_ptr<tagTimerExtraInfo> extraInfo = nullptr);
+	void killTimer(Handler *handler, Timer_t& timerId);
 
-	void RemoveTimer(tagTimerNode* node);
-	void EnableDebugInfo(bool enable)
+	void removeTimer(tagTimerNode* node);
+	void enableDebugInfo(bool enable)
 	{
 		mEnableDebugInfo = enable;
 	}
 private:
-	long GetMinIdleTime()const;
-	void DetectList();
+	long getMinIdleTime()const;
+	void detectList();
 
-	uint32_t Cascade(uint32_t wheelIndex);
-	void AddTimer(uint32_t milseconds, tagTimerNode *node);
-	void AddToReady(tagTimerNode *node);
-	void ProcessTimeOut();
+	uint32_t cascade(uint32_t wheelIndex);
+	void addTimer(uint32_t milseconds, tagTimerNode *node);
+	void addToReady(tagTimerNode *node);
+	void processTimeOut();
 
-	static uint64_t GetCurrentMillisec();
+	static uint64_t getCurrentMillisec();
 
 private:
 	tagWheel *  mWheels[5];

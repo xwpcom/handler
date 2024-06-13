@@ -2,6 +2,9 @@
 #include "looper.h"
 #include "system.h"
 #include "loger.h"
+#include "looperdata.h"
+#include "handlerdata.h"
+#include "timermanager.h"
 
 #ifdef _MSC_VER
 #pragma comment(lib,"ws2_32.lib")
@@ -14,6 +17,8 @@ static __declspec(thread) Looper * gBaseLooper = NULL;
 Looper::Looper()
 {
 	mTag = "looper";
+	mLooperData = make_unique<tagLooperData>(this);
+	mLooperData->mLooper = this;
 }
 
 void Looper::setCurrentLooper(Looper* looper)
@@ -62,6 +67,96 @@ int Looper::getMessage(tagLooperMessage& msg)
 		if (mLooperData->mBMQuit && canQuit())
 		{
 			return -1;
+		}
+
+		uint32_t msDelayNext = INFINITE;
+		processTimer(msDelayNext, mLooperTick - mLastIoTick);
+		msDelayNext = max(1, msDelayNext);
+
+		{
+			//assert(msDelayNext);//如果为0，会形成busy loop,占用大量cpu
+
+			BOOL fAlertable = FALSE;
+			ULONG count = 0;
+			OVERLAPPED_ENTRY items[100];
+			BOOL ok = GetQueuedCompletionStatusEx(mLooperHandle
+												  , items
+												  , _countof(items)
+												  , &count
+												  , msDelayNext
+												  , fAlertable
+			);
+
+			if (!ok)
+			{
+				return -1;
+			}
+
+			if (count > 0 && mTimerManager)
+			{
+				mLastIoTick = mLooperTick;
+			}
+
+			#if defined _CONFIG_PROFILER
+			if (mEnableProfiler)
+			{
+				mProfiler->ioCount += count;
+			}
+			#endif
+#if 0
+			for (ULONG i = 0; i < count; i++)
+			{
+				auto& item = items[i];
+				auto ptr = item.lpCompletionKey;
+				auto ov = item.lpOverlapped;
+				auto bytes = item.dwNumberOfBytesTransferred;
+
+				if (ptr > 0xFFFF)
+				{
+					assert(ov);
+
+					IocpObject* obj = (IocpObject*)ptr;
+					IoContext* context = CONTAINING_RECORD(ov, IoContext, mOV);
+
+					#if defined _CONFIG_PROFILER
+
+					//避免在下面的DispatchIoContext中修改mEnableProfiler
+					const auto enableProfiler = mEnableProfiler;
+
+					ULONGLONG tick = 0;
+					if (enableProfiler)
+					{
+						tick = ShellTool::GetTickCount64();
+					}
+					#endif
+
+					obj->DispatchIoContext(context, bytes);
+					//此时obj可能已失效
+
+					#if defined _CONFIG_PROFILER
+					if (enableProfiler)
+					{
+						tick = ShellTool::GetTickCount64() - tick;
+
+						if (mEnableProfiler)
+						{
+							if (tick > mProfiler->ioContextMaxTick)
+							{
+								mProfiler->ioContextMaxTick = tick;
+							}
+
+						}
+					}
+					#endif
+				}
+			}
+#endif
+			if (mLooperData->mAttachThread)
+			{
+				// stack looper只触发，不收真正有用的消息
+
+				return -1;
+			}
 		}
 	} while (0);
 	return -1;
@@ -153,7 +248,7 @@ bool Looper::canQuit()
 
 void Looper::assertLooper()
 {
-
+	assert(isSelfThread());
 }
 
 void Looper::onCreate()
@@ -228,7 +323,7 @@ int64_t Looper::dispatchMessage(tagLooperMessage& msg)
 
 		*msg.done = true;
 
-		/* 由于SenderLooper是采用sendMessage调用到此,能保证SenderLooper到此一直有效 */
+		/* 由于senderLooper是采用sendMessage调用到此,能保证senderLooper到此一直有效 */
 		if (msg.waitAck && msg.sendLooper)
 		{
 			assert(msg.sendLooper != this);
@@ -272,7 +367,7 @@ int64_t Looper::postMessage(shared_ptr<Handler>handler, int32_t msg, int64_t wp,
 			//LogW(TAG, "skip postMessage(handler=%s,msg=%d)", handler->GetObjectName().c_str(), msg);
 		}
 
-		//ASSERT(FALSE);
+		//assert(FALSE);
 		return 0;
 	}
 
@@ -286,11 +381,7 @@ int64_t Looper::postMessage(shared_ptr<Handler>handler, int32_t msg, int64_t wp,
 		if (mLooperData->mAttachThread)
 		{
 			/* stack looper没有消息循环,所以只触发，不加空消息 */
-			if (msg == BM_NULL)
-			{
-
-			}
-			else
+			if (msg != BM_NULL)
 			{
 				assert(FALSE);
 			}
@@ -330,7 +421,7 @@ int64_t Looper::sendMessage(shared_ptr<Handler> handler, int32_t msg, int64_t wp
 {
 	if (!mLooperData->mLooperRunning)
 	{
-		//ASSERT(FALSE);
+		//assert(FALSE);
 		logW(mTag)<<"looper is NOT running,skip msg"<<msg;
 		return 0;
 	}
@@ -388,7 +479,7 @@ int64_t Looper::sendMessage(shared_ptr<Handler> handler, int32_t msg, int64_t wp
 
 	#if defined MSC_VER && !defined _DEBUG
 	//Looper和win32 thread互相send message时容易死锁,所以要用postMessage
-	ASSERT(FALSE);//please use postMessage
+	assert(FALSE);//please use postMessage
 	return 0;
 	#endif
 
@@ -505,6 +596,192 @@ void Looper::sendMessageHelper(tagLooperMessage& msg, Looper& looper)
 	{
 		looper.singleStep();
 	}
+}
+
+int Looper::processTimer(uint32_t & cmsDelayNext, int64_t ioIdleTick)
+{
+	if (mTimerManager == nullptr)
+	{
+		return -1;
+	}
+
+	bool needWait = true;
+	auto timerMan = Looper::GetTimerManager();
+	#if defined _CONFIG_PROFILER
+
+	//避免在下面的timer中修改mEnableProfiler
+	const auto enableProfiler = mEnableProfiler;
+
+	ULONGLONG tick = 0;
+	if (enableProfiler)
+	{
+		tick = ShellTool::GetTickCount64();
+	}
+	#endif
+
+	needWait = (timerMan->processTimer(cmsDelayNext, ioIdleTick) == 0);
+
+	#if defined _CONFIG_PROFILER
+	if (enableProfiler)
+	{
+		tick = ShellTool::GetTickCount64() - tick;
+
+		if (mEnableProfiler)
+		{
+			if (tick > mProfiler->timerMaxTick)
+			{
+				mProfiler->timerMaxTick = tick;
+			}
+
+		}
+	}
+	#endif
+
+	if (needWait)
+	{
+		if (cmsDelayNext != INFINITE)
+		{
+			cmsDelayNext = max(1, cmsDelayNext);/* 发现timer不是很精确,不能恰好等那么长时间，也许可提高精度 */
+		}
+
+		assert(cmsDelayNext);//如果为0，会形成busy loop,占用大量cpu
+	}
+
+	return needWait ? -1 : 0;
+}
+
+shared_ptr<TimerManager> Looper::GetTimerManager()
+{
+	if (mTimerManager == nullptr)
+	{
+		mTimerManager = make_shared<TimerManager>();
+	}
+
+	return mTimerManager;
+}
+
+bool Looper::isRunning()const
+{
+	return mLooperData->mLooperRunning;
+}
+
+int Looper::postQuitMessage(long exitCode)
+{
+	if (!isRunning())
+	{
+		return 0;
+	}
+
+	postMessage(BM_QUIT, exitCode);
+	return 0;
+}
+
+void Looper::killTimer(Timer_t& timerId)
+{
+	killTimer(this, timerId);
+}
+
+Timer_t Looper::setTimer(Timer_t& timerId, uint32_t interval)
+{
+	if (timerId)
+	{
+		killTimer(timerId);
+	}
+
+	return timerId = setTimer(this, interval);
+}
+
+Timer_t Looper::setTimerEx(uint32_t interval, shared_ptr<tagTimerExtraInfo> info)
+{
+	return setTimerEx(this, interval, info);
+}
+
+Timer_t Looper::setTimer(Handler* handler, uint32_t interval)
+{
+	return setTimerEx(handler, interval);
+}
+
+void Looper::killTimer(Handler* handler, Timer_t& timerId)
+{
+	if (!handler)
+	{
+		assert(FALSE);
+		return;
+	}
+
+	if (!isSelfThread())
+	{
+		assert(FALSE);
+		return;
+	}
+
+	auto timerMan = Looper::GetTimerManager();
+	timerMan->killTimer(handler, timerId);
+}
+
+Timer_t Looper::setTimerEx(Handler* handler, uint32_t interval, shared_ptr<tagTimerExtraInfo> info)
+{
+	if (!handler)
+	{
+		assert(FALSE);
+		return 0;
+	}
+
+	if (!isSelfThread())
+	{
+		assert(FALSE);
+		return 0;
+	}
+
+	if (!handler->isCreated())
+	{
+		logW(mTag)<< "fail set timer,handler is NOT created";
+		return 0;
+	}
+
+	if (!isLooper())
+	{
+		if (handler->isDestroyed())
+		{
+			if (mLooperData->mDestroyedHandlers.find(handler) == mLooperData->mDestroyedHandlers.end())
+			{
+				logW(mTag)<< "fail set timer,handler is destroyed";
+				return 0;
+			}
+		}
+	}
+
+	auto timerMan = GetTimerManager();
+	auto timerId = handler->mInternalData->NextTimerId();
+	timerMan->setTimer(handler, timerId, interval, info);
+	postMessage(BM_NULL); /* 投递消息保证重新计算等待时间 */
+	return timerId;
+}
+
+Timer_t Looper::setTimer(shared_ptr<Handler>handler, uint32_t interval)
+{
+	return setTimerEx(handler, interval);
+}
+
+void Looper::killTimer(shared_ptr<Handler>handler, Timer_t& timerId)
+{
+	if (!handler)
+	{
+		return;
+	}
+
+	killTimer(handler.get(), timerId);
+}
+
+Timer_t Looper::setTimerEx(shared_ptr<Handler>handler, uint32_t interval, shared_ptr<tagTimerExtraInfo> info)
+{
+	if (!handler)
+	{
+		assert(FALSE);
+		return 0;
+	}
+
+	return setTimerEx(handler.get(), interval, info);
 }
 
 }

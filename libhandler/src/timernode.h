@@ -18,7 +18,7 @@ typedef struct tagTimerNode
 	TimerManager	*mTimerManager = nullptr;
 	Handler*		mHandler = nullptr;
 	uint64_t		mDeadTime = 0;
-	long			mTimerId=0;
+	Timer_t			mTimerId=0;
 	uint32_t		mInterval = 0;
 
 	shared_ptr<tagTimerExtraInfo> mExtraInfo;//用来实现延时消息

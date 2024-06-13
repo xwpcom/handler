@@ -1,6 +1,9 @@
 ﻿#pragma once
 namespace Bear {
+typedef int32_t Timer_t;
 
+class Object;
+class Handler;
 class Runnable;
 struct tagTimerExtraInfo
 {

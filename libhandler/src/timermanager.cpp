@@ -1,8 +1,9 @@
 ﻿#include "pch.h"
 #include "timermanager.h"
-//#include "looperimpl.h"
 #include "timerextrainfo.h"
-//#include "handlerinternaldata.h"
+#include "looper.h"
+#include "system.h"
+#include "handler.h"
 #include "profiler.h"
 
 #define GRANULARITY 1 //1ms
@@ -13,8 +14,6 @@
 #define WHEEL_MASK1 (WHEEL_SIZE1 - 1)
 #define WHEEL_MASK2 (WHEEL_SIZE2 - 1)
 #define WHEEL_NUM 5
-
-#if 0
 
 namespace Bear {
 
@@ -39,7 +38,7 @@ typedef struct tagWheel
 TimerManager::TimerManager()
 {
 	mBusying = false;
-	mStartTick = GetCurrentMillisec();
+	mStartTick = getCurrentMillisec();
 	mWheels[0] = new tagWheel(WHEEL_SIZE1);
 	for (int i = 1; i < WHEEL_NUM; ++i)
 	{
@@ -59,7 +58,7 @@ TimerManager::~TimerManager()
 	}
 }
 
-uint64_t TimerManager::GetCurrentMillisec()
+uint64_t TimerManager::getCurrentMillisec()
 {
 	return tickCount();// *10;//加速
 }
@@ -78,9 +77,9 @@ tagWheel::~tagWheel()
 	}
 }
 
-void TimerManager::DetectList()
+void TimerManager::detectList()
 {
-	uint64_t now = GetCurrentMillisec();
+	uint64_t now = getCurrentMillisec();
 	uint64_t loopnum = now > mStartTick ? (now - mStartTick) / GRANULARITY : 0;
 
 	tagWheel *wheel = mWheels[0];
@@ -99,7 +98,7 @@ void TimerManager::DetectList()
 			//link = node->link.next;
 			link = link->next;
 
-			AddToReady(node);
+			addToReady(node);
 		}
 		assert(link == spoke);
 		spoke->next = spoke->prev = spoke;
@@ -107,15 +106,15 @@ void TimerManager::DetectList()
 		if (++wheel->spokeIndex >= wheel->size)
 		{
 			wheel->spokeIndex = 0;
-			Cascade(1);
+			cascade(1);
 		}
 		mStartTick += GRANULARITY;
 	}
 
-	ProcessTimeOut();
+	processTimeOut();
 }
 
-void TimerManager::AddToReady(tagTimerNode *node)
+void TimerManager::addToReady(tagTimerNode *node)
 {
 	tagNodeLink *nodelink = &(node->link);
 	nodelink->prev = mReadyNodes.prev;
@@ -124,9 +123,9 @@ void TimerManager::AddToReady(tagTimerNode *node)
 	mReadyNodes.prev = nodelink;
 }
 
-void TimerManager::ProcessTimeOut()
+void TimerManager::processTimeOut()
 {
-	uint64_t tickNow = GetCurrentMillisec();
+	uint64_t tickNow = getCurrentMillisec();
 	while (1)
 	{
 		tagNodeLink *item = mReadyNodes.next;
@@ -154,7 +153,7 @@ void TimerManager::ProcessTimeOut()
 		else
 		{
 			node->mDeadTime = tickNow + node->mInterval;
-			AddTimer(node->mInterval, node);
+			addTimer(node->mInterval, node);
 
 			//在OnTimer中可以删除当前timerId或其他timerId
 			//如果删除的timerId恰好已加入mReadyNodes也能保证killTimer之后不会触发此timer
@@ -206,7 +205,7 @@ void TimerManager::ProcessTimeOut()
 	mReadyNodes.next = mReadyNodes.prev = &mReadyNodes;
 }
 
-uint32_t TimerManager::Cascade(uint32_t wheelindex)
+uint32_t TimerManager::cascade(uint32_t wheelindex)
 {
 	if (wheelindex < 1 || wheelindex >= WHEEL_NUM)
 	{
@@ -215,7 +214,7 @@ uint32_t TimerManager::Cascade(uint32_t wheelindex)
 
 	tagWheel *wheel = mWheels[wheelindex];
 	int casnum = 0;
-	uint64_t now = GetCurrentMillisec();
+	uint64_t now = getCurrentMillisec();
 	tagNodeLink *spoke = &wheel->spokes[wheel->spokeIndex++];
 	tagNodeLink *link = spoke->next;
 	spoke->next = spoke->prev = spoke;
@@ -226,12 +225,12 @@ uint32_t TimerManager::Cascade(uint32_t wheelindex)
 		link = node->link.next;
 		if (node->mDeadTime <= now)
 		{
-			AddToReady(node);
+			addToReady(node);
 		}
 		else
 		{
 			uint64_t milseconds = node->mDeadTime - now;
-			AddTimer((uint32_t)milseconds, node);
+			addTimer((uint32_t)milseconds, node);
 			++casnum;
 		}
 	}
@@ -239,13 +238,13 @@ uint32_t TimerManager::Cascade(uint32_t wheelindex)
 	if (wheel->spokeIndex >= wheel->size)
 	{
 		wheel->spokeIndex = 0;
-		casnum += Cascade(++wheelindex);
+		casnum += cascade(++wheelindex);
 	}
 
 	return casnum;
 }
 
-void TimerManager::AddTimer(uint32_t milseconds, tagTimerNode *node)
+void TimerManager::addTimer(uint32_t milseconds, tagTimerNode *node)
 {
 	tagNodeLink *spoke = NULL;
 	uint32_t interval = milseconds / GRANULARITY;
@@ -295,7 +294,7 @@ void TimerManager::AddTimer(uint32_t milseconds, tagTimerNode *node)
 	spoke->prev = nodelink;
 }
 
-void TimerManager::RemoveTimer(tagTimerNode* node)
+void TimerManager::removeTimer(tagTimerNode* node)
 {
 	//DW("%s(timerId=%d,interval=%d)", __func__, node->mTimerId,node->mInterval);
 
@@ -309,7 +308,7 @@ void TimerManager::RemoveTimer(tagTimerNode* node)
 	nodelink->prev = nodelink->next = nullptr;
 }
 
-int TimerManager::setTimer(shared_ptr<Handler>handler, long timerId, UINT interval, shared_ptr<tagTimerExtraInfo> extraInfo)
+Timer_t TimerManager::setTimer(shared_ptr<Handler>handler, Timer_t timerId, uint32_t interval, shared_ptr<tagTimerExtraInfo> extraInfo)
 {
 	if (!handler)
 	{
@@ -320,7 +319,7 @@ int TimerManager::setTimer(shared_ptr<Handler>handler, long timerId, UINT interv
 	return setTimer(handler.get(), timerId, interval, extraInfo);
 }
 
-int TimerManager::setTimer(Handler *handler, long timerId, UINT interval, shared_ptr<tagTimerExtraInfo> extraInfo)
+Timer_t TimerManager::setTimer(Handler *handler, Timer_t timerId, uint32_t interval, shared_ptr<tagTimerExtraInfo> extraInfo)
 {
 #ifndef _MSC_VER
 	//DV("%s,id=%d", __func__, timerId);
@@ -348,7 +347,7 @@ int TimerManager::setTimer(Handler *handler, long timerId, UINT interval, shared
 		timerMap = handler->mInternalData->mTimerMap;
 	}
 
-	uint64_t mDeadTime = GetCurrentMillisec() + interval;
+	uint64_t mDeadTime = getCurrentMillisec() + interval;
 
 	if (node)
 	{
@@ -364,11 +363,11 @@ int TimerManager::setTimer(Handler *handler, long timerId, UINT interval, shared
 	}
 	node->mExtraInfo = extraInfo;
 
-	AddTimer(interval, node.get());
+	addTimer(interval, node.get());
 	return 0;
 }
 
-void TimerManager::killTimer(Handler *handler, long& timerId)
+void TimerManager::killTimer(Handler *handler, Timer_t& timerId)
 {
 	if (!handler)
 	{
@@ -388,7 +387,7 @@ void TimerManager::killTimer(Handler *handler, long& timerId)
 			if (node)
 			{
 				timerId = 0;
-				node->mTimerManager->RemoveTimer(node.get());
+				node->mTimerManager->removeTimer(node.get());
 			}
 			else
 			{
@@ -398,7 +397,7 @@ void TimerManager::killTimer(Handler *handler, long& timerId)
 	}
 }
 
-void TimerManager::killTimer(shared_ptr<Handler>handler, long& timerId)
+void TimerManager::killTimer(shared_ptr<Handler>handler, Timer_t& timerId)
 {
 	if (!handler)
 	{
@@ -414,7 +413,7 @@ void TimerManager::clearCacheTick()
 
 }
 
-int TimerManager::ProcessTimer(DWORD& cmsDelayNext, ULONGLONG ioIdleTick)
+int TimerManager::processTimer(uint32_t& cmsDelayNext, int64_t ioIdleTick)
 {
 	if (mBusying)/* 禁止重入 */
 	{
@@ -423,7 +422,7 @@ int TimerManager::ProcessTimer(DWORD& cmsDelayNext, ULONGLONG ioIdleTick)
 	}
 
 	mBusying = true;
-	DetectList();
+	detectList();
 	mBusying = false;
 
 	if (ioIdleTick < 1000)
@@ -432,14 +431,14 @@ int TimerManager::ProcessTimer(DWORD& cmsDelayNext, ULONGLONG ioIdleTick)
 	}
 	else
 	{
-		cmsDelayNext = (DWORD)GetMinIdleTime();
+		cmsDelayNext = getMinIdleTime();
 	}
 	return 0;
 }
 
 //返回距离下一timer触发的时间，用来决定Looper能等待多久
 //为简单起见,只在最低几级wheel检查,这段代码比较丑陋，至少是可以工作的了，后面再改进
-long TimerManager::GetMinIdleTime()const
+long TimerManager::getMinIdleTime()const
 {
 	long rewindTime0 = -1;
 	long ms0 = 0;
@@ -481,7 +480,7 @@ long TimerManager::GetMinIdleTime()const
 		if (spoke->next != spoke)
 		{
 			//由于一个spoke中可能有超多timer,并且各timer是没有排序的,不适合遍历整个spoke来获取最小tick的timer
-			//所以假定wheel[0]需要Cascade时即触发下一timer
+			//所以假定wheel[0]需要cascade时即触发下一timer
 			return rewindTime0;
 		}
 
@@ -523,7 +522,7 @@ long TimerManager::GetMinIdleTime()const
 					if (spoke->next != spoke)
 					{
 						//由于一个spoke中可能有超多timer,并且各timer是没有排序的,不适合遍历整个spoke来获取最小tick的timer
-						//所以假定wheel[0]需要Cascade时即触发下一timer
+						//所以假定wheel[0]需要cascade时即触发下一timer
 						return rewindTime1;
 					}
 
@@ -579,5 +578,3 @@ long TimerManager::GetMinIdleTime()const
 }
 
 }
-
-#endif

@@ -2,10 +2,10 @@
 namespace Bear {
 enum eBM
 {
-	//corelooper内部使用
-	//BM_TIMER,//不需要,由corelooper直接调用OnTimer
+	//corelooper internal use
+	//BM_TIMER,//corelooper direct call OnTimer
 	//BM_CLOSE = 2000000,
-	BM_QUIT = 2000000,
+	//BM_QUIT = 2000000,
 	//BM_AUTO_CREATE,
 	BM_CREATE_EXIT_EVENT,
 
