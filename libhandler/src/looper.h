@@ -5,10 +5,6 @@ namespace Bear {
 class TimerManager;
 
 class Looper :public Handler {
-	friend class Handler;
-	friend struct tagHandlerData;
-	friend class SmartTlsLooper;
-	friend class SmartTlsLooperManager;
 public:
 	Looper();
 	~Looper();
@@ -73,6 +69,10 @@ private:
 	shared_ptr<TimerManager> mTimerManager;
 	int64_t mLastIoTick = 0;
 
+	friend class Handler;
+	friend struct tagHandlerData;
+	friend class SmartTlsLooper;
+	friend class SmartTlsLooperManager;
 };
 
 class MainLooper :public Looper {

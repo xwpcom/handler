@@ -16,11 +16,6 @@ XiongWanPing 2024.05.30
 class Handler :public Object
 	,public enable_shared_from_this<Handler>
 {
-	friend class Looper;
-	friend class TimerManager;
-	friend struct tagHandlerData;
-	friend class SmartTlsLooper;
-	friend class SmartTlsLooperManager;
 public:
 	Handler();
 	virtual ~Handler();
@@ -37,6 +32,7 @@ public:
 	virtual void syncSend(function<void>()) {}
 	bool LOOPER_SAFE isSelfLooper()const;
 	void assertLooper()const;
+
 protected:
 	virtual void onCreate();
 	virtual void onDestroy();
@@ -56,6 +52,12 @@ protected:
 private:
 	int64_t mThreadId = 0;
 	unique_ptr<tagHandlerData> mInternalData;
+
+	friend class Looper;
+	friend class TimerManager;
+	friend struct tagHandlerData;
+	friend class SmartTlsLooper;
+	friend class SmartTlsLooperManager;
 };
 
 }
