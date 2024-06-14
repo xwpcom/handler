@@ -68,6 +68,7 @@ tagHandlerData::~tagHandlerData()
 	}
 }
 
+/*
 //规定0是无效timerId
 //其他数值都是有效的,包括负数
 long tagHandlerData::NextTimerId()
@@ -125,6 +126,7 @@ long tagHandlerData::NextTimerId()
 	assert(FALSE);
 	return -1;
 }
+*/
 
 void tagHandlerData::RemoveAllTimer()
 {
@@ -318,40 +320,6 @@ int tagHandlerData::AddChildHelper(weak_ptr<Handler> wpChild, string name)
 	}
 
 	return ret;
-}
-
-int tagHandlerData::RegisterShortcut_Impl(const string& name, weak_ptr<Handler>obj)
-{
-	if (!mShortcuts)
-	{
-		mShortcuts = make_shared<unordered_map<string, weak_ptr<Handler>>>();
-	}
-
-	auto handler = obj.lock();
-	if (handler)
-	{
-		(*mShortcuts)[name] = obj;
-	}
-	else
-	{
-		mShortcuts->erase(name);
-	}
-
-	return 0;
-}
-
-shared_ptr<Handler> tagHandlerData::Shortcut_Impl(const std::string& name)
-{
-	if (mShortcuts)
-	{
-		auto iter = mShortcuts->find(name);
-		if (iter != mShortcuts->end())
-		{
-			return iter->second.lock();
-		}
-	}
-
-	return nullptr;
 }
 
 shared_ptr<Handler> tagHandlerData::FindObject_Impl(const string& url)
@@ -776,13 +744,6 @@ void tagHandlerData::SetRationalHandlerUpperLimit(int count)
 	gRationalHandlerUpperLimit = count;
 }
 #endif
-
-void tagHandlerData::TestContestSleep()
-{
-#ifdef _CONFIG_TEST_CONTEST
-	ShellTool::Sleep(rand() % 100);//故意测试竞争
-#endif
-}
 
 //gc时如果没能成功析构Handler,可能多次调用本接口
 //可用来检测不能及时析构的Handler

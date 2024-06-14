@@ -35,13 +35,13 @@ public:
 	string LOOPER_SAFE getName()const;
 	virtual void asyncPost(function<void>()) {}
 	virtual void syncSend(function<void>()) {}
-	virtual Timer_t setTimer(Timer_t& id, uint32_t ms) { return 0; }
-	virtual void killTimer(Timer_t& id) {}
 	bool LOOPER_SAFE isSelfLooper()const;
 	void assertLooper()const;
 protected:
 	virtual void onCreate();
 	virtual void onDestroy();
+	virtual Timer_t setTimer(Timer_t& id, uint32_t ms) { return 0; }
+	virtual void killTimer(Timer_t& id) {}
 	virtual int64_t onMessage(uint32_t msg, int64_t wp = 0, int64_t lp = 0);
 	int64_t LOOPER_SAFE sendMessage(uint32_t msg, int64_t wp=0, int64_t lp = 0);
 	virtual void onTimer(Timer_t id) {}

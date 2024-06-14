@@ -813,7 +813,7 @@ Timer_t Looper::setTimerEx(Handler* handler, uint32_t interval, shared_ptr<tagTi
 	}
 
 	auto timerMan = GetTimerManager();
-	auto timerId = handler->mInternalData->NextTimerId();
+	auto timerId = ++handler->mInternalData->mNextTimerId;// NextTimerId();
 	timerMan->setTimer(handler, timerId, interval, info);
 	postMessage(BM_NULL); /* 投递消息保证重新计算等待时间 */
 	return timerId;

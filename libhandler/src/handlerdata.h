@@ -42,8 +42,6 @@ struct tagHandlerData
 	virtual int AddChildHelper(weak_ptr<Handler> child, string name);
 	shared_ptr<Handler> FindObject_Impl(const string& url);
 	shared_ptr<Handler> GetChild_Impl(LONG_PTR id);
-	shared_ptr<Handler> Shortcut_Impl(const string& name);
-	int RegisterShortcut_Impl(const string& name,weak_ptr<Handler>obj);
 	long GetChildCount()const;
 	void RemoveChildWeakRef(Handler *);
 	void RemoveChildWeakRef_Impl(Handler *handler);
@@ -57,7 +55,7 @@ struct tagHandlerData
 
 	shared_ptr<Handler> mSelfRef;	//确保在运行时this指针有效,用于looper和被动型object
 	unordered_map<long*, weak_ptr<Handler>> mChildren;
-	shared_ptr<unordered_map<string, weak_ptr<Handler>>> mShortcuts;
+	//shared_ptr<unordered_map<string, weak_ptr<Handler>>> mShortcuts;
 
 	shared_ptr<Handler> mParent;
 	LONG_PTR mId = 0;//可用来标记特定handler,或者存放context信息
@@ -72,27 +70,13 @@ struct tagHandlerData
 	bool mIsLooper : 1;// = false;
 	bool mMaybeLongBlock : 1;//=false
 	bool mTimerIdRewind : 1;//当mNextTimerId回绕后分配新mNextTimerId时要检测冲突
-	long mNextTimerId = 0;
+	Timer_t mNextTimerId = 0;
 
 	shared_ptr<unordered_map<long, shared_ptr<tagTimerNode>>> mTimerMap;
-	long NextTimerId();
+	//long NextTimerId();
 	void RemoveAllTimer();
 
 	shared_ptr<TimerManager> mTimerManager;//当设置timer时要引用looper中的TimerManager,是为了保证在析构时TimerManager是有效的
-	shared_ptr<unordered_map<string,weak_ptr<Handler>>> mCacheChilds;
-	void TestContestSleep();
-
-#ifdef _CONFIG_MONITOR_HANDLER
-	static void DumpAll();
-	static int  GetHandlerCount();
-	static int fetchHandlerInfo(JsonObject& json);
-	static void SetRationalHandlerUpperLimit(int count);
-
-	static CriticalSection gCSBaseHandler;
-	static unordered_map<long*, long*> gHandlers;
-	static int gRationalHandlerUpperLimit;// 1000;
-#endif
-
 	unordered_map<UINT, Handler::PFN_OnMessage> mMessageEntries;
 };
 
