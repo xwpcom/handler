@@ -17,9 +17,6 @@ class Handler :public Object
 	,public enable_shared_from_this<Handler>
 {
 	friend class Looper;
-	//friend class LooperImpl;
-	//friend class Looper_Windows;
-	//friend class Looper_Linux;
 	friend class TimerManager;
 	friend struct tagHandlerData;
 	friend class SmartTlsLooper;
@@ -35,16 +32,17 @@ public:
 	bool isLooper()const;
 	
 	void LOOPER_SAFE setObjectName(const string& name);
-	string getName()const;
+	string LOOPER_SAFE getName()const;
 	virtual void asyncPost(function<void>()) {}
 	virtual void syncSend(function<void>()) {}
 	virtual Timer_t setTimer(Timer_t& id, uint32_t ms) { return 0; }
 	virtual void killTimer(Timer_t& id) {}
-	bool LOOPER_SAFE isSelfThread()const;
+	bool LOOPER_SAFE isSelfLooper()const;
+	void assertLooper()const;
 protected:
 	virtual void onCreate();
 	virtual void onDestroy();
-	int64_t onMessage(uint32_t msg, int64_t wp = 0, int64_t lp = 0);
+	virtual int64_t onMessage(uint32_t msg, int64_t wp = 0, int64_t lp = 0);
 	int64_t LOOPER_SAFE sendMessage(uint32_t msg, int64_t wp=0, int64_t lp = 0);
 	virtual void onTimer(Timer_t id) {}
 

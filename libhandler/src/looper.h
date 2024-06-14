@@ -11,12 +11,23 @@ class Looper :public Handler {
 	friend class SmartTlsLooperManager;
 public:
 	Looper();
+	~Looper();
 	
+	static Looper* getMainLooper();
+	static int setMainLooper(Looper*);
+	static bool isMainLooper(Looper* looper);
+
 	//只有AppLooper及其子类MainLooper为阻塞，其他looper的都是非阻塞
-	void start();
+	virtual void start();
 	Looper& create(function<void()>) { return *this; }
 	bool isRunning()const;
 protected:
+	virtual int64_t onMessage(uint32_t msg, int64_t wp = 0, int64_t lp = 0);
+	void onBMQuit();
+	int startHelper(bool newThread);
+	static void* _WorkThreadCB(void* p);
+	void* _WorkThread();
+
 	void onCreate();
 	int run();
 	int getMessage(tagLooperMessage& msg);
@@ -52,6 +63,8 @@ protected:
 
 	shared_ptr<TimerManager> GetTimerManager();
 	int processTimer(uint32_t& cmsDelayNext, int64_t ioIdleTick);
+
+	string mThreadName = "looper";
 private:
 	int64_t mLooperTick = 0;
 	unique_ptr<tagLooperData> mLooperData;
@@ -59,12 +72,29 @@ private:
 	HANDLE mLooperHandle = INVALID_HANDLE_VALUE;
 	shared_ptr<TimerManager> mTimerManager;
 	int64_t mLastIoTick = 0;
+
 };
 
 class MainLooper :public Looper {
 public:
 	MainLooper()
 	{
+		auto name = "MainLooper";
+		setObjectName(name);
+		mThreadName = name;
+		setMainLooper(this);
+	}
+	
+	virtual void start()
+	{
+		if (currentLooper())
+		{
+			assert(false);
+			return;
+		}
+
+		bool newThread = false;
+		startHelper(newThread);
 	}
 
 };

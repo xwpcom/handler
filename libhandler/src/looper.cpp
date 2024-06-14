@@ -20,6 +20,60 @@ Looper::Looper()
 	mLooperData = make_unique<tagLooperData>(this);
 	mLooperData->mLooper = this;
 }
+static Looper* gMainLooper = nullptr;
+Looper* Looper::getMainLooper()
+{
+	return gMainLooper;
+}
+
+bool Looper::isMainLooper(Looper* looper)
+{
+	return gMainLooper == looper;
+}
+
+int Looper::setMainLooper(Looper* looper)
+{
+	if (looper)
+	{
+		//LogV(TAG,"%s,name=%s", __func__, looper->mThreadName.c_str());
+
+		if (gMainLooper)
+		{
+			assert(false);
+			return -1;
+		}
+
+	}
+
+	gMainLooper = looper;
+	return 0;
+}
+
+Looper::~Looper()
+{
+	if (getMainLooper() == this)
+	{
+		setMainLooper(nullptr);
+	}
+
+	if (currentLooper())
+	{
+		if (currentLooper() == this)
+		{
+			//DV("%s is current looper,reset it", GetObjectName().c_str());
+			setCurrentLooper(nullptr);
+		}
+		else
+		{
+			if (mLooperData->mAttachThread)
+			{
+				logW(mTag)<<"cross thread destroy TLS looper,maybe left obsolete raw pointer,it is very dangerous!";
+			}
+
+			logW(mTag)<< getName()," is NOT current looper", currentLooper();
+		}
+	}
+}
 
 void Looper::setCurrentLooper(Looper* looper)
 {
@@ -248,7 +302,7 @@ bool Looper::canQuit()
 
 void Looper::assertLooper()
 {
-	assert(isSelfThread());
+	assert(isSelfLooper());
 }
 
 void Looper::onCreate()
@@ -257,7 +311,14 @@ void Looper::onCreate()
 
 void Looper::start()
 {
-	run();
+	if (currentLooper())
+	{
+		assert(false);
+		return ;
+	}
+
+	bool newThread = true;
+	startHelper(newThread);
 }
 
 int Looper::run()
@@ -426,7 +487,7 @@ int64_t Looper::sendMessage(shared_ptr<Handler> handler, int32_t msg, int64_t wp
 		return 0;
 	}
 
-	if (mLooperData->mAttachThread && isSelfThread())
+	if (mLooperData->mAttachThread && isSelfLooper())
 	{
 		/* 清理stack looper收到的所有BM_NULL消息 */
 		AutoLock lock(mLooperData->mMutex);
@@ -461,7 +522,7 @@ int64_t Looper::sendMessage(shared_ptr<Handler> handler, int32_t msg, int64_t wp
 	在主线程调用looper Start()之后马上调用sendMessage时,有可能looper中的mThreadId在_WorkThread中还没初始化，但这不影响结果
 	*/
 
-	if (isSelfThread())
+	if (isSelfLooper())
 	{
 		return dispatchMessage(loopMsg);
 	}
@@ -709,7 +770,7 @@ void Looper::killTimer(Handler* handler, Timer_t& timerId)
 		return;
 	}
 
-	if (!isSelfThread())
+	if (!isSelfLooper())
 	{
 		assert(FALSE);
 		return;
@@ -727,7 +788,7 @@ Timer_t Looper::setTimerEx(Handler* handler, uint32_t interval, shared_ptr<tagTi
 		return 0;
 	}
 
-	if (!isSelfThread())
+	if (!isSelfLooper())
 	{
 		assert(FALSE);
 		return 0;
@@ -783,5 +844,220 @@ Timer_t Looper::setTimerEx(shared_ptr<Handler>handler, uint32_t interval, shared
 
 	return setTimerEx(handler.get(), interval, info);
 }
+
+void* Looper::_WorkThreadCB(void* p)
+{
+	auto pThis = (Looper *)p;
+	gBaseLooper = pThis;
+
+	#ifdef _DEBUG
+	//string name = pThis->GetObjectName();
+	#endif
+
+	//auto exitEvent = pThis->mLooperData->mExitEvent;
+	auto ret = pThis->_WorkThread();
+	/*
+	if (exitEvent)
+	{
+		#ifdef _DEBUG
+
+		//LogV(TAG,"SetEvent(%s)", name.c_str());
+		//ShellTool::Sleep(3000);
+		#endif
+		exitEvent->Set();//上层可等待此事件，确认looper完全退出
+	}
+	*/
+
+	return ret;
+}
+
+void* Looper::_WorkThread()
+{
+	//*
+	if (!mThreadName.empty())
+	{
+		setThreadName(mThreadName);
+	}
+	mThreadId = currentTid();
+	/*/
+
+	//LogV(TAG,"%s::%s,mThreadId=%d", mThreadName.c_str(), __func__, mThreadId);
+
+	/*
+	说明:在创建thread之前就要置mCreated = true;
+	如果到这里才置true,由于线程调度影响，可能导致looper->Start()之后mCreate短暂为false而导致竞争关系
+	影响是send/post会失败!
+	*/
+
+	onCreate();
+
+	run();
+
+	auto ret = mLooperData->mExitCode;
+	assert(!mLooperData->mLooperRunning);
+
+	assert(mInternalData->mSelfRef);
+	mInternalData->mSelfRef = nullptr;//这里会自动调用delete this
+
+	setThreadName("UserWorkItem");
+
+	return (void*)(int64_t)ret;
+}
+
+int Looper::startHelper(bool newThread)
+{
+	if (mLooperData->mLooperRunning)
+	{
+		logW(mTag)<< "mLooperRunning="<< mLooperData->mLooperRunning<< ",CurrentLooper="<< currentLooper();
+		assert(FALSE);
+		return 0;
+	}
+
+	/*
+	{
+		if (!mLooperData->mExitEvent)
+		{
+			auto owner = mLooperData->mOwnerLooper.lock();
+			if (owner)
+			{
+				SetExitEvent(owner->CreateExitEvent());
+			}
+		}
+	}
+	*/
+
+	{
+		assert(mLooperHandle == INVALID_HANDLE_VALUE);
+		mLooperHandle = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, 0);
+	}
+
+	mInternalData->mSelfRef = shared_from_this();
+
+	mLooperData->mLooperRunning = true;
+	mLooperData->mBMQuit = false;
+
+	if (newThread)
+	{
+		mInternalData->mCreated = true;
+		BOOL ok = QueueUserWorkItem((LPTHREAD_START_ROUTINE)_WorkThreadCB, (LPVOID)this, 0);
+		return ok ? 0 : -1;
+	}
+
+	Looper* looperCache = currentLooper();
+	mInternalData->mCreated = true;
+	_WorkThreadCB(this);
+	setCurrentLooper(looperCache);
+	return 0;
+}
+
+int64_t Looper::onMessage(uint32_t msg, int64_t wp, int64_t lp)
+{
+	switch (msg)
+	{
+		/*
+	case BM_HANDLER_DESTROY:
+	{
+		auto handler = (Handler*)wp;
+		auto obj = handler->shared_from_this();
+		mLooperData->mDestroyedHandlers[handler] = obj;
+
+		if (!mLooperData->mTimerGC)
+		{
+			SetTimer(mLooperData->mTimerGC, 1);
+		}
+
+		auto count = mLooperData->mDestroyedHandlers.size();
+		if (count > 100)
+		{
+			LogV(TAG, "this=%p,gc size=%d", this, count);
+		}
+
+		return 0;
+	}
+	case BM_POST_DISPOSE:
+	{
+		auto info = (Core::tagAutoObject*)wp;
+		info->clear();
+		mLooperData->gc();
+		return 0;
+	}
+	*/
+
+	case BM_QUIT:
+	{
+		if (!mLooperData->mBMQuit)
+		{
+			mLooperData->mExitCode = (long)wp;
+			mLooperData->mTickStartQuit = tickCount();
+			postMessage(BM_DESTROY);
+			onBMQuit();
+		}
+		break;
+	}
+	/*
+	case BM_CREATE_EXIT_EVENT:
+	{
+		tagCreateExitEventInfo* info = (tagCreateExitEventInfo*)wp;
+		info->mEvent = CreateExitEvent_Impl();
+		return 0;
+	}
+
+	#if defined _CONFIG_PROFILER
+	case BM_PROFILER_START:
+	{
+		if (mEnableProfiler && mProfiler)
+		{
+			return 0;
+		}
+
+		if (!mProfiler)
+		{
+			mProfiler = new tagProfiler;
+		}
+
+		mProfiler->clear();
+		mProfiler->startTick = ShellTool::GetTickCount64();
+		mEnableProfiler = true;
+
+		return 0;
+	}
+	case BM_PROFILER_STOP:
+	{
+		if (mEnableProfiler && mProfiler)
+		{
+			mProfiler->stopTick = ShellTool::GetTickCount64();
+		}
+
+		mEnableProfiler = false;
+
+		//不要删除mProfiler
+
+		return 0;
+	}
+	#endif
+	*/
+
+	}
+
+	return __super::onMessage(msg, wp, lp);
+}
+
+void Looper::onBMQuit()
+{
+	assert(!mLooperData->mBMQuit);
+	mLooperData->mBMQuit = true;
+	//LogV(TAG,"%s,mBMQuit=%d",mThreadName.c_str(),mBMQuit);
+
+	assert(mLooperData->mTimerCheckQuitLooper == 0);
+	if (mLooperData->mTimerCheckQuitLooper == 0)
+	{
+		/*
+		注意:如果CanQuitLooperNow()返回false时,并且后续动作不能主动触发looper,
+		则需要主动定时触发CanQuitLooperNow()，否则looper有可能死等待
+		*/
+		mLooperData->mTimerCheckQuitLooper = setTimerEx(10);//定时检查CanQuitLooperNow()
+	}
+}
+
 
 }

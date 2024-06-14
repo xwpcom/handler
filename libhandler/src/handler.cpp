@@ -25,7 +25,7 @@ void Handler::onDestroy()
 
 }
 
-bool Handler::isSelfThread()const
+bool Handler::isSelfLooper()const
 {
 	auto tid = currentTid();
 	return mThreadId == tid;
@@ -38,11 +38,21 @@ int64_t Handler::onMessage(uint32_t msg, int64_t wp, int64_t lp)
 
 void Handler::setObjectName(const string& name)
 {
+	assertLooper();
 	mInternalData->SetName(name);
 }
 
+void Handler::assertLooper()const
+{
+	if (mThreadId == 0) {
+		return ;
+	}
+
+	assert(isSelfLooper());
+}
 string Handler::getName()const
 {
+	assertLooper();
 	return mInternalData->GetName();
 }
 

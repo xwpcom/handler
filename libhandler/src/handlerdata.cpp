@@ -72,7 +72,7 @@ tagHandlerData::~tagHandlerData()
 //其他数值都是有效的,包括负数
 long tagHandlerData::NextTimerId()
 {
-	//assert(isSelfThread());
+	//assert(isSelfLooper());
 
 	if (!mTimerMap || mTimerMap->size() == 0)
 	{
@@ -182,7 +182,7 @@ long tagHandlerData::GetLiveChildrenCount()
 
 int tagHandlerData::AddChildHelper(weak_ptr<Handler> wpChild, string name)
 {
-	assert(mHandler->isSelfThread());
+	assert(mHandler->isSelfLooper());
 
 	auto child = wpChild.lock();
 	if (!child)
@@ -357,7 +357,7 @@ shared_ptr<Handler> tagHandlerData::Shortcut_Impl(const std::string& name)
 shared_ptr<Handler> tagHandlerData::FindObject_Impl(const string& url)
 {
 	#if 0
-	assert(mHandler->isSelfThread());
+	assert(mHandler->isSelfLooper());
 
 	bool directChild = false;
 	{
@@ -461,7 +461,7 @@ shared_ptr<Handler> tagHandlerData::GetChild_Impl(LONG_PTR id)
 {
 	/*
 	//assert(id);
-	assert(mHandler->isSelfThread());
+	assert(mHandler->isSelfLooper());
 
 	for (auto& iter:mChildren)
 	{
@@ -483,7 +483,7 @@ long tagHandlerData::GetChildCount()const
 
 void tagHandlerData::RemoveChildWeakRef(Handler *handler)
 {
-	if (mHandler->isSelfThread())
+	if (mHandler->isSelfLooper())
 	{
 		RemoveChildWeakRef_Impl(handler);
 	}
@@ -495,7 +495,7 @@ void tagHandlerData::RemoveChildWeakRef(Handler *handler)
 
 void tagHandlerData::RemoveChildWeakRef_Impl(Handler *handler)
 {
-	assert(mHandler->isSelfThread());
+	assert(mHandler->isSelfLooper());
 
 	if (!handler)
 	{

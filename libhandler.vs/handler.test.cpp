@@ -31,7 +31,7 @@ TEST_CASE("Handler") {
 	{
 	};
 
-	make_shared<AppLooper>()->start();
+	//make_shared<AppLooper>()->start();
 
 	//REQUIRE(2 == 1);
 }
@@ -162,19 +162,33 @@ TEST_CASE("Looper") {
 
 	class AppLooper :public MainLooper
 	{
+		Timer_t mTimer_test = 0;
+
+		void onCreate()
+		{
+			__super::onCreate();
+
+			setTimer(mTimer_test, 1000);
+		}
+
+		void onTimer(Timer_t id)
+		{
+			if (id == mTimer_test)
+			{
+				static int idx = 0;
+				++idx;
+				logV(mTag) << "idx=" << idx;
+				postQuitMessage(0);
+				return;
+			}
+
+			__super::onTimer(id);
+		}
 
 	};
 
 	string mTag = "looper";
 
 	auto obj = make_shared<AppLooper>();
-	obj->create([mTag]() {
-		logV(mTag) << "onCreate";
-				}).start();
-
-	{
-		Looper obj;
-		obj.start();
-	}
-
+	obj->start();
 }
