@@ -18,7 +18,7 @@ Looper::Looper()
 {
 	mTag = "looper";
 	mLooperData = make_unique<tagLooperData>(this);
-	mLooperData->mLooper = this;
+	//mLooperData->mLooper = this;
 	mInternalData->mIsLooper = true;
 	mInternalData->SetActiveObject();
 	mLooperTick = tickCount();

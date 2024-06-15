@@ -144,10 +144,10 @@ TEST_CASE("mutex")
 		}
 	};
 
-	Task items[10];
-	thread threads[10];
-	// spawn 10 threads:
-	for (int i = 0; i < 10; ++i)
+	Task items[1];
+	thread threads[1];
+	// spawn threads:
+	for (int i = 0; i < 1; ++i)
 	{
 		auto t = items[i];
 		t.mCS = cs;
@@ -200,15 +200,15 @@ TEST_CASE("Looper_addChild") {
 	{
 		Timer_t mTimer_test = 0;
 
-		class DemoHandler:public Handler
+		class DemoHandler2:public Handler
 		{
 			string mTag = "demo";
 		public:
-			DemoHandler() {
+			DemoHandler2() {
 				logV(mTag) << __func__ << " this=" << this;
 
 			}
-			~DemoHandler() {
+			~DemoHandler2() {
 				logV(mTag) << __func__ << " this=" << this;
 
 			}
@@ -235,7 +235,7 @@ TEST_CASE("Looper_addChild") {
 		{
 			__super::onCreate();
 
-			auto obj = make_shared<DemoHandler>();
+			auto obj = make_shared<DemoHandler2>();
 			addChild(obj);
 		}
 

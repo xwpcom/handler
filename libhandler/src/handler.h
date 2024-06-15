@@ -76,7 +76,7 @@ protected:
 	virtual Timer_t setTimer(Timer_t& id, uint32_t ms);
 	virtual void killTimer(Timer_t& id);
 	virtual int64_t onMessage(uint32_t msg, int64_t wp = 0, int64_t lp = 0);
-	int64_t LOOPER_SAFE sendMessage(uint32_t msg, int64_t wp=0, int64_t lp = 0);
+	virtual int64_t sendMessage(uint32_t msg, int64_t wp=0, int64_t lp = 0);
 	virtual void onTimer(Timer_t id) {}
 	
 	int postDisposeHelper(uint64_t wp);
