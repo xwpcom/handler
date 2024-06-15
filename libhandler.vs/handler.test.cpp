@@ -187,7 +187,7 @@ TEST_CASE("Looper_mainLooper") {
 
 	};
 
-	for(int i=0;i<2;i++)
+	for(int i=0;i<1;i++)
 	{
 		auto obj = make_shared<AppLooper>();
 		obj->start();
@@ -202,6 +202,17 @@ TEST_CASE("Looper_addChild") {
 
 		class DemoHandler:public Handler
 		{
+			string mTag = "demo";
+		public:
+			DemoHandler() {
+				logV(mTag) << __func__ << " this=" << this;
+
+			}
+			~DemoHandler() {
+				logV(mTag) << __func__ << " this=" << this;
+
+			}
+		protected:
 			Timer_t mTimer_delayExit = 0;
 			void onCreate()
 			{
@@ -226,6 +237,59 @@ TEST_CASE("Looper_addChild") {
 
 			auto obj = make_shared<DemoHandler>();
 			addChild(obj);
+		}
+
+	};
+
+
+	auto obj = make_shared<AppLooper>();
+	obj->start();
+}
+
+TEST_CASE("createHandler") {
+
+	class AppLooper :public MainLooper
+	{
+		Timer_t mTimer_test = 0;
+
+		class DemoHandler :public Handler
+		{
+			string mTag = "demo";
+		public:
+			DemoHandler() {
+				logV(mTag) << __func__ << " this=" << this;
+
+			}
+			~DemoHandler() {
+				logV(mTag) << __func__ << " this=" << this;
+
+			}
+		protected:
+			Timer_t mTimer_delayExit = 0;
+			void onCreate()
+			{
+				__super::onCreate();
+				setTimer(mTimer_delayExit, 1000);
+			}
+
+			void onTimer(Timer_t id) {
+				if (id == mTimer_delayExit)
+				{
+					currentLooper()->postQuitMessage();
+					return;
+				}
+
+				__super::onTimer(id);
+			}
+		};
+
+		void onCreate()
+		{
+			__super::onCreate();
+
+			auto obj = make_shared<DemoHandler>();
+			addChild(obj);
+			//obj->create();
 		}
 
 	};

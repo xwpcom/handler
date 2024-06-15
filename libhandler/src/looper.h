@@ -73,6 +73,7 @@ private:
 
 	friend class Handler;
 	friend struct tagHandlerData;
+	friend struct tagLooperData;
 	friend class SmartTlsLooper;
 	friend class SmartTlsLooperManager;
 };

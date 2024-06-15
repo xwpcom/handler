@@ -14,6 +14,15 @@ Handler::Handler()
 
 Handler::~Handler()
 {
+	mInternalData->mHandler = nullptr;
+
+	{
+		auto parent = mInternalData->mParent;
+		if (parent)
+		{
+			parent->sendMessage(BM_CHILD_DTOR, (int64_t)this);
+		}
+	}
 }
 
 void Handler::onCreate()
@@ -25,7 +34,6 @@ void Handler::markDestroyed()
 {
 	mInternalData->mDestroy = true;
 }
-
 
 void Handler::onDestroy()
 {
@@ -112,6 +120,7 @@ int64_t Handler::onMessage(uint32_t msg, int64_t wp, int64_t lp)
 	}
 	case BM_DESTROY:
 	{
+		//logV(mTag) << "BM_DESTROY,this=" << this;
 		if (!mInternalData->mDestroyMarkCalled)
 		{
 			mInternalData->mDestroyMarkCalled = true;
@@ -421,5 +430,37 @@ void Handler::killTimer(Timer_t& timerId)
 	mInternalData->killTimer(timerId);
 }
 
+//说明:
+//对Handler来说,主动调用create()没太大意义,并且很容易忘记调用它
+//所以约定BM_CREATE是可选的
+//考虑到一般都会调用addChild,所以在addChild()中会适时触发BM_CREATE
+//注意有可能跨looper来调用create或addChild,所以BM_CREATE都采用sendMessage来触发
+void Handler::create(shared_ptr<Handler> parent)
+{
+	auto ret = -1;
+	if (parent)
+	{
+		ret = parent->addChild(shared_from_this());
+	}
+
+	if (ret == 0 && !mInternalData->mCreated)
+	{
+		sendMessage(BM_CREATE);
+	}
+}
+
+void Handler::destroy()
+{
+	if (!isCreated())
+	{
+		return;
+	}
+
+	if (!mInternalData->mDestroy)
+	{
+		mInternalData->mDestroy = true;
+		sendMessage(BM_DESTROY);
+	}
+}
 
 }

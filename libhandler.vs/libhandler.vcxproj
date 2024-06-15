@@ -167,6 +167,7 @@
     <ClCompile Include="..\libhandler\src\loger.cpp" />
     <ClCompile Include="..\libhandler\src\loghandler_dt.cpp" />
     <ClCompile Include="..\libhandler\src\looper.cpp" />
+    <ClCompile Include="..\libhandler\src\looperdata.cpp" />
     <ClCompile Include="..\libhandler\src\profiler.cpp" />
     <ClCompile Include="..\libhandler\src\stringtool.cpp" />
     <ClCompile Include="..\libhandler\src\system.cpp" />

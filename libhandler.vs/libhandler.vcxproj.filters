@@ -149,6 +149,9 @@
     <ClCompile Include="..\libhandler\src\handlerdata.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\libhandler\src\looperdata.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="libhandler.rc">

@@ -19,7 +19,11 @@ Looper::Looper()
 	mTag = "looper";
 	mLooperData = make_unique<tagLooperData>(this);
 	mLooperData->mLooper = this;
+	mInternalData->mIsLooper = true;
+	mInternalData->SetActiveObject();
+	mLooperTick = tickCount();
 }
+
 static Looper* gMainLooper = nullptr;
 Looper* Looper::getMainLooper()
 {
@@ -51,6 +55,7 @@ int Looper::setMainLooper(Looper* looper)
 
 Looper::~Looper()
 {
+	logV(mTag) << __func__ <<",this=" << this;
 	if (getMainLooper() == this)
 	{
 		setMainLooper(nullptr);
@@ -291,11 +296,12 @@ bool Looper::canQuit()
 			mInternalData->Dump(0);//dump which object are still live
 		}
 	}
+	#endif
+
 	//有未决事务时，应该等到所有事务完结后才能安全退出looper
 	auto nc = mInternalData->GetLiveChildrenCount();
 	return nc == 0;
 
-	#endif
 
 	return true;
 }

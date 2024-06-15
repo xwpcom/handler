@@ -21,8 +21,8 @@ public:
 	Handler();
 	virtual ~Handler();
 
-	virtual void create() {}
-	virtual void destroy() {}
+	virtual void create(shared_ptr<Handler> parent=nullptr);
+	virtual void destroy();
 	virtual int addChild(weak_ptr<Handler> obj);
 	shared_ptr<Handler> parent()const;
 	bool isLooper()const;
@@ -86,16 +86,17 @@ protected:
 	void markDestroyed();
 
 	void* operator new(size_t) = delete; //disable new,please use make_shared
-	typedef int64_t* (Handler::* PFN_OnMessage)(int64_t* wp, int64_t* lp);
+	//typedef int64_t* (Handler::* PFN_OnMessage)(int64_t* wp, int64_t* lp);
 
 	string mTag="handler";
 private:
 	int64_t mThreadId = 0;
-	unique_ptr<tagHandlerData> mInternalData;
+	shared_ptr<tagHandlerData> mInternalData;
 
 	friend class Looper;
 	friend class TimerManager;
 	friend struct tagHandlerData;
+	friend struct tagLooperData;
 	friend class SmartTlsLooper;
 	friend class SmartTlsLooperManager;
 };

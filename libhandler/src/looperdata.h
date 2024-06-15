@@ -25,9 +25,9 @@ public:
 
 struct tagLooperData
 {
-	tagLooperData(Looper*) {}
-	~tagLooperData() {}
-	void gc() {}
+	tagLooperData(Looper*);
+	~tagLooperData();
+	void gc();
 
 	Looper* mLooper = nullptr;
 	bool				mLooperRunning = false;//looper数量不会很多，所以没有必要用bit field
@@ -55,5 +55,6 @@ struct tagLooperData
 	map<void*, shared_ptr<Handler>> mDestroyedHandlers;
 	Timer_t	mTimerGC = 0;
 	int		mSeqGC = 0;
+
 };
 }

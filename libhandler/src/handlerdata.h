@@ -75,7 +75,7 @@ struct tagHandlerData
 	void RemoveAllTimer();
 
 	shared_ptr<TimerManager> mTimerManager;//当设置timer时要引用looper中的TimerManager,是为了保证在析构时TimerManager是有效的
-	unordered_map<UINT, Handler::PFN_OnMessage> mMessageEntries;
+	//unordered_map<UINT, Handler::PFN_OnMessage> mMessageEntries;
 };
 
 }
