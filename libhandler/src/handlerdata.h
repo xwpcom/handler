@@ -6,13 +6,11 @@
 //#define _CONFIG_MONITOR_HANDLER	//用来测试object leaks
 
 namespace Bear {
-enum eCommand
+
+struct tagCancelRunnable
 {
-	BM_NULL = 0,
-	BM_CREATE,
-	BM_DESTROY,			//调用Destroy()时触发
-	BM_CHILD_DTOR,
-	BM_QUIT,
+	shared_ptr<Handler>				mHandler;
+	shared_ptr<Runnable>			mRunnable;
 };
 
 using std::unordered_map;
@@ -39,7 +37,7 @@ struct tagHandlerData
 
 	virtual long SetTimerEx(UINT interval, shared_ptr<tagTimerExtraInfo> info = nullptr);
 	long GetLiveChildrenCount();
-	virtual int AddChildHelper(weak_ptr<Handler> child, string name);
+	virtual int addChildHelper(weak_ptr<Handler> child);
 	shared_ptr<Handler> FindObject_Impl(const string& url);
 	shared_ptr<Handler> GetChild_Impl(LONG_PTR id);
 	long GetChildCount()const;

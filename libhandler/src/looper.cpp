@@ -726,7 +726,7 @@ bool Looper::isRunning()const
 	return mLooperData->mLooperRunning;
 }
 
-int Looper::postQuitMessage(long exitCode)
+int Looper::postQuitMessage(int32_t exitCode)
 {
 	if (!isRunning())
 	{
@@ -954,7 +954,6 @@ int64_t Looper::onMessage(uint32_t msg, int64_t wp, int64_t lp)
 {
 	switch (msg)
 	{
-		/*
 	case BM_HANDLER_DESTROY:
 	{
 		auto handler = (Handler*)wp;
@@ -963,25 +962,24 @@ int64_t Looper::onMessage(uint32_t msg, int64_t wp, int64_t lp)
 
 		if (!mLooperData->mTimerGC)
 		{
-			SetTimer(mLooperData->mTimerGC, 1);
+			setTimer(mLooperData->mTimerGC, 1);
 		}
 
 		auto count = mLooperData->mDestroyedHandlers.size();
 		if (count > 100)
 		{
-			LogV(TAG, "this=%p,gc size=%d", this, count);
+			logV(mTag)<< "this="<<this<<",gc size="<<count;
 		}
 
 		return 0;
 	}
 	case BM_POST_DISPOSE:
 	{
-		auto info = (Core::tagAutoObject*)wp;
+		auto info = (tagAutoObject*)wp;
 		info->clear();
 		mLooperData->gc();
 		return 0;
 	}
-	*/
 
 	case BM_QUIT:
 	{
@@ -1057,6 +1055,60 @@ void Looper::onBMQuit()
 		*/
 		mLooperData->mTimerCheckQuitLooper = setTimerEx(10);//定时检查CanQuitLooperNow()
 	}
+}
+
+void Looper::cancelRunnableInQueue(shared_ptr<Handler>& handler, shared_ptr<Runnable>& runnable)
+{
+	if (!isSelfLooper())
+	{
+		assert(false);
+		return;
+	}
+
+	{
+		AutoLock lock(mLooperData->mMutex);
+
+		auto& items = mLooperData->mMessageList;
+		for (auto iter2 = items.begin(); iter2 != items.end();)
+		{
+			auto iter = iter2++;
+
+			if (iter->cmd != BM_POST_RUNNABLE
+				|| iter->handler != handler
+				)
+			{
+				continue;
+			}
+
+			auto info = (tagDelayedRunnable*)iter->wp;
+			if (info->mRunnable == runnable)
+			{
+				items.erase(iter);
+				info->mSelfRef = nullptr;
+
+				//可能存在多个，所以要继续遍历
+			}
+		}
+	}
+
+}
+
+void Looper::onTimer(Timer_t id)
+{
+	if (id == mLooperData->mTimerGC)
+	{
+		mLooperData->gc();
+		auto n = mLooperData->mSeqGC;
+		if (n > 0)
+		{
+			auto interval = (n + 1) * n / 2;
+			auto ms = min(1000, interval);
+			setTimer(mLooperData->mTimerGC, ms);
+		}
+		return;
+	}
+
+	__super::onTimer(id);
 }
 
 

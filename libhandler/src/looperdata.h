@@ -53,7 +53,7 @@ struct tagLooperData
 
 	//private:
 	map<void*, shared_ptr<Handler>> mDestroyedHandlers;
-	long	mTimerGC = 0;
+	Timer_t	mTimerGC = 0;
 	int		mSeqGC = 0;
 };
 }

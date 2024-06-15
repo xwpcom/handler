@@ -158,7 +158,7 @@ TEST_CASE("mutex")
 		th.join();
 }
 
-TEST_CASE("Looper") {
+TEST_CASE("Looper_mainLooper") {
 
 	class AppLooper :public MainLooper
 	{
@@ -187,7 +187,49 @@ TEST_CASE("Looper") {
 
 	};
 
-	string mTag = "looper";
+	for(int i=0;i<2;i++)
+	{
+		auto obj = make_shared<AppLooper>();
+		obj->start();
+	}
+}
+
+TEST_CASE("Looper_addChild") {
+
+	class AppLooper :public MainLooper
+	{
+		Timer_t mTimer_test = 0;
+
+		class DemoHandler:public Handler
+		{
+			Timer_t mTimer_delayExit = 0;
+			void onCreate()
+			{
+				__super::onCreate();
+				setTimer(mTimer_delayExit, 1000);
+			}
+
+			void onTimer(Timer_t id) {
+				if (id == mTimer_delayExit)
+				{
+					currentLooper()->postQuitMessage();
+					return;
+				}
+
+				__super::onTimer(id);
+			}
+		};
+
+		void onCreate()
+		{
+			__super::onCreate();
+
+			auto obj = make_shared<DemoHandler>();
+			addChild(obj);
+		}
+
+	};
+
 
 	auto obj = make_shared<AppLooper>();
 	obj->start();

@@ -182,7 +182,7 @@ long tagHandlerData::GetLiveChildrenCount()
 	return count;
 }
 
-int tagHandlerData::AddChildHelper(weak_ptr<Handler> wpChild, string name)
+int tagHandlerData::addChildHelper(weak_ptr<Handler> wpChild)
 {
 	assert(mHandler->isSelfLooper());
 
@@ -192,21 +192,10 @@ int tagHandlerData::AddChildHelper(weak_ptr<Handler> wpChild, string name)
 		return -1;
 	}
 
-//#define _CONFIG_TEST_CONTEST	//测试竞争
-
-#ifdef _CONFIG_TEST_CONTEST
-	srand((int)ShellTool::GetTickCount64());
-#endif
-
 	bool callCreate = false;
 	bool callDestroy = false;
 
 	{
-		//要考虑各种极端情况,
-		//比如用户故意把handler添加到不同的looper中,下面的代码会出现竞争,所以要做同步
-
-		AutoLock lock(gInternalDataCS);//有点过度防范了？
-
 		if (child->mInternalData->mParent || (!child->isLooper() && child->isCreated()))
 		{
 			if (child->mInternalData->mParent)
@@ -224,16 +213,15 @@ int tagHandlerData::AddChildHelper(weak_ptr<Handler> wpChild, string name)
 			return -1;
 		}
 
+		/*
 		if (!mHandler->isLooper() && !child->isLooper())
 		{
 			//子handler必须和parent handler位于同一looper
-			/*
 			if (mHandler->GetThreadId() != child->GetThreadId())
 			{
 				LogW(TAG,"%s fail,handler must be in the same looper as parent handler", __func__);
 				return -1;
 			}
-			*/
 		}
 
 		if (!name.empty())
@@ -249,7 +237,9 @@ int tagHandlerData::AddChildHelper(weak_ptr<Handler> wpChild, string name)
 			//assert(FALSE);
 			//return -1;
 		}
+		*/
 
+		/*
 		if (mHandler->isLooper())
 		{
 			//子looper挂到父looper时，如果没有设定exit event,则自动设定owner looper
@@ -257,7 +247,6 @@ int tagHandlerData::AddChildHelper(weak_ptr<Handler> wpChild, string name)
 			if (parentLooper)
 			{
 				assert(false);//todo
-				/*
 				auto looper = dynamic_pointer_cast<Looper>(child);
 				if (looper && !looper->GetExitEvent())
 				{
@@ -266,10 +255,10 @@ int tagHandlerData::AddChildHelper(weak_ptr<Handler> wpChild, string name)
 						looper->SetOwnerLooper(parentLooper);
 					}
 				}
-				*/
 			}
 
 		}
+		*/
 
 		if (!child->isLooper())
 		{

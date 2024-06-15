@@ -17,9 +17,12 @@ public:
 	virtual void start();
 	Looper& create(function<void()>) { return *this; }
 	bool isRunning()const;
+	int postQuitMessage(int32_t exitCode=0);
 protected:
 	virtual int64_t onMessage(uint32_t msg, int64_t wp = 0, int64_t lp = 0);
 	void onBMQuit();
+	void onTimer(Timer_t id);
+	void cancelRunnableInQueue(shared_ptr<Handler>& handler, shared_ptr<Runnable>& runnable);
 	int startHelper(bool newThread);
 	static void* _WorkThreadCB(void* p);
 	void* _WorkThread();
@@ -33,7 +36,6 @@ protected:
 	bool canQuit();
 	void assertLooper();
 	void singleStep();
-	int postQuitMessage(long exitCode);
 	
 	virtual Timer_t setTimer(Timer_t& timerId, uint32_t interval);
 	virtual void killTimer(Timer_t& timerId);
@@ -75,13 +77,14 @@ private:
 	friend class SmartTlsLooperManager;
 };
 
+//同一时间最多只应该有一个实例
 class MainLooper :public Looper {
 public:
 	MainLooper()
 	{
 		auto name = "MainLooper";
-		setObjectName(name);
 		mThreadName = name;
+		setObjectName(name);
 		setMainLooper(this);
 	}
 	
