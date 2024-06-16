@@ -360,7 +360,7 @@ int64_t Handler::sendMessage(uint32_t msg, int64_t wp, int64_t lp)
 
 	if (!mInternalData->mLooper)
 	{
-		logW(mTag)<< "mInternalData->mLooper is null,msg="<<msg<<",name="<<getName();
+		logW(mTag)<< "looper is null,skip msg="<<msg<<",name="<<getName();
 		return 0;
 	}
 

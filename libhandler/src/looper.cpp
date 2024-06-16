@@ -314,7 +314,6 @@ void Looper::start()
 		return ;
 	}
 
-	mLooperData->mStarted = true;
 	bool newThread = true;
 	startHelper(newThread);
 }
@@ -481,12 +480,12 @@ int64_t Looper::sendMessage(shared_ptr<Handler> handler, int32_t msg, int64_t wp
 {
 	if (mLooperData->mStarted &&  !mLooperData->mLooperRunning)
 	{
-		//assert(FALSE);
 		logW(mTag)<<"looper is NOT running,skip msg "<<msg;
 		return 0;
 	}
 
-	if (mLooperData->mAttachThread && isSelfLooper())
+	const auto selfLooper = isSelfLooper();
+	if (mLooperData->mAttachThread && selfLooper)
 	{
 		/* 清理stack looper收到的所有BM_NULL消息 */
 		AutoLock lock(mLooperData->mMutex);
@@ -521,7 +520,7 @@ int64_t Looper::sendMessage(shared_ptr<Handler> handler, int32_t msg, int64_t wp
 	在主线程调用looper Start()之后马上调用sendMessage时,有可能looper中的mThreadId在_WorkThread中还没初始化，但这不影响结果
 	*/
 
-	if (isSelfLooper())
+	if (selfLooper)
 	{
 		return dispatchMessage(loopMsg);
 	}
@@ -643,15 +642,7 @@ void Looper::sendMessageHelper(tagLooperMessage& msg, Looper& looper)
 	}
 
 	postQueuedCompletionStatus();
-	/*
-	#ifdef _DEBUG
-		string info;
-		info = StringTool::Format("%s,msg=%d", __func__, msg.mMsg);
-		TickDumper check(info.c_str(), false, 100);
-	#else
-		TickDumper check(__func__, false, 100);
-	#endif
-	*/
+
 	while (!*msg.done)
 	{
 		looper.singleStep();
@@ -904,6 +895,7 @@ int Looper::startHelper(bool newThread)
 
 	mLooperData->mLooperRunning = true;
 	mLooperData->mBMQuit = false;
+	mLooperData->mStarted = true;
 
 	if (newThread)
 	{

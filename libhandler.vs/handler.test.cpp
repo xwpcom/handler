@@ -8,6 +8,7 @@
 #include <mutex>                // mutex, unique_lock
 #include <condition_variable>
 
+// https://github.com/JohnnyHendriks/TestAdapter_Catch2/blob/main/Docs/Settings.md#dllrunner
 
 #define CATCH_CONFIG_MAIN
 #include "catch2.hpp"
@@ -373,6 +374,21 @@ TEST_CASE("Looper.childLooper") {
 	}
 }
 
+TEST_CASE("Looper.SendMessageSpeed_windows")
+{
+	auto hwnd = GetDesktopWindow();
+	auto count = 1000 * 1000;
+	auto tick = tickCount();
+	for (int i = 0; i < count; i++)
+	{
+		::SendMessage(hwnd, WM_NULL, 0, 0);
+	}
+
+	tick = tickCount() - tick;
+	logI("test")<< "count="<<count<<",tick="<<tick<<",perSecond="<< count * 1000.0 / tick;
+	//i7 4790K上面 count=1000000,tick=15688,perSecond=63743
+}
+
 TEST_CASE("Looper.sendMessage") 
 {
 
@@ -383,8 +399,6 @@ TEST_CASE("Looper.sendMessage")
 		void onCreate()
 		{
 			__super::onCreate();
-
-			setTimer(mTimer_test, 3*1000);
 
 			class DemoLooper :public Looper
 			{
@@ -401,6 +415,13 @@ TEST_CASE("Looper.sendMessage")
 				{
 					__super::onCreate();
 
+					/*
+					{
+						HANDLE hThread = OpenThread(THREAD_SET_INFORMATION | THREAD_QUERY_INFORMATION, FALSE, GetCurrentThreadId());
+						DWORD_PTR value = SetThreadAffinityMask(hThread, 0x0001);
+					}
+					*/
+
 				}
 			};
 
@@ -408,15 +429,30 @@ TEST_CASE("Looper.sendMessage")
 			addChild(obj);
 			obj->start();
 
+			/*
+			{
+				HANDLE hThread = OpenThread(THREAD_SET_INFORMATION | THREAD_QUERY_INFORMATION, FALSE, GetCurrentThreadId());
+				DWORD_PTR value = SetThreadAffinityMask(hThread, 0x0001);
+			}
+			*/
+
 			auto tick = tickCount();
-			int count = 1000*50;// *1000;
+			int count = 1000 *1000;
 			for (int i = 0; i < count; i++)
 			{
 				obj->sendMessage(BM_NULL);
 			}
 
 			tick = tickCount()-tick;
-			logV(mTag) << "count = " << count << ",tick=" << tick;
+			logI(mTag) << "count=" << count << ",tick=" << tick << ",perSecond=" << count * 1000.0 / tick;
+			
+			//不绑定cpu时
+			//count=1000000,tick=10062,perSecond=99383.8
+			
+			// 绑定到同一cpu时
+			//count=1000000,tick=3250,perSecond=307692
+			setTimer(mTimer_test, 1);
+
 		}
 
 		void onTimer(Timer_t id)
