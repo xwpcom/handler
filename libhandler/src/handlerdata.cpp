@@ -65,68 +65,10 @@ tagHandlerData::~tagHandlerData()
 	if (mParent)
 	{
 		mParent->mInternalData->RemoveChildWeakRef(mHandler);
+
+		mParent->mInternalData->mChildCount--;
 	}
 }
-
-/*
-//规定0是无效timerId
-//其他数值都是有效的,包括负数
-long tagHandlerData::NextTimerId()
-{
-	//assert(isSelfLooper());
-
-	if (!mTimerMap || mTimerMap->size() == 0)
-	{
-#ifdef _TEST_TIMER_ID_REWIND
-		if (!mTimerMap)
-		{
-			mTimerMap = make_shared<std::map<long, shared_ptr<tagTimerNode>>>();
-		}
-#else
-		mTimerIdRewind = false;
-		mNextTimerId = 0;
-		return ++mNextTimerId;
-#endif
-	}
-
-	//检查是否能复用timer id
-	if (mNextTimerId != 0)
-	{
-		auto iter = mTimerMap->find(mNextTimerId);
-		if (iter == mTimerMap->end())
-		{
-			return mNextTimerId;
-		}
-	}
-
-	auto id = ++mNextTimerId;
-	if (id == 0)
-	{
-		mTimerIdRewind = true;
-		++mNextTimerId;
-	}
-
-	//考虑mNextTimerId回绕的情况
-	if (!mTimerIdRewind)
-	{
-		return id;
-	}
-
-	while (1)
-	{
-		auto iter = mTimerMap->find(mNextTimerId);
-		if (iter == mTimerMap->end())
-		{
-			return mNextTimerId;
-		}
-
-		++mNextTimerId;
-	}
-
-	assert(FALSE);
-	return -1;
-}
-*/
 
 void tagHandlerData::RemoveAllTimer()
 {
@@ -161,6 +103,13 @@ void tagHandlerData::RemoveAllTimer()
 
 long tagHandlerData::GetLiveChildrenCount()
 {
+	//*
+	if (mChildCount > 0)
+	{
+		return mChildCount;
+	}
+	//*/
+
 	int count = 0;
 
 	for (auto iter = mChildren.begin(); iter != mChildren.end();)
@@ -274,6 +223,8 @@ int tagHandlerData::addChildHelper(weak_ptr<Handler> wpChild)
 		}
 
 		child->mInternalData->mParent = mHandler->shared_from_this();
+		mChildCount++;
+		
 		mChildren[(long*)child.get()] = wpChild;
 
 		if (child->mInternalData->mPassive)
@@ -313,123 +264,11 @@ int tagHandlerData::addChildHelper(weak_ptr<Handler> wpChild)
 
 shared_ptr<Handler> tagHandlerData::FindObject_Impl(const string& url)
 {
-	#if 0
-	assert(mHandler->isSelfLooper());
-
-	bool directChild = false;
-	{
-		//只缓存直接child
-		auto pos = url.find('/');
-		if (pos == string::npos)
-		{
-			directChild = true;
-
-			if (mCacheChilds)
-			{
-				auto it = mCacheChilds->find(url);
-				if (it != mCacheChilds->end())
-				{
-					auto obj=it->second.lock();
-					if (obj && obj->GetObjectName() == url)
-					{
-						return obj;
-					}
-				}
-			}
-		}
-	}
-
-	string item;
-	shared_ptr<Handler> obj;
-	TextSeparator demux(url.c_str(), "/");
-	int level = 0;
-	while (1)
-	{
-		int ret = demux.GetNext(item);
-		if (ret)
-		{
-			break;
-		}
-		++level;
-
-		if (!obj)
-		{
-			obj = mHandler->shared_from_this();
-		}
-		/*
-		http://127.0.0.1/proc.xml?url=IotServer[SW.00168FXP]
-		*/
-
-		auto pos1 = item.find('[');
-		if (pos1 != string::npos)
-		{
-			auto pos2 = item.find(']',pos1);
-			if (pos2 != string::npos)
-			{
-				auto name = item.substr(0, pos1);
-				auto token = item.substr(pos1+1, pos2 - pos1-1);
-				
-				auto root=obj->GetChild(name, nullptr);
-				if (!root)
-				{
-					LogV(TAG, "no find [%s]", name.c_str());
-					return nullptr;
-				}
-
-				auto child = root->mapChild(token);
-				if (!child)
-				{
-					LogV(TAG, "no find [%s]", item.c_str());
-					return nullptr;
-				}
-
-				obj = child;
-				continue;
-			}
-		}
-
-		auto child = obj->getChild(item, nullptr);
-		if (!child)
-		{
-			logV(TAG)<<"no find:"<<item;
-			return nullptr;
-		}
-
-		obj = child;
-	}
-
-	if (directChild && obj)
-	{
-		if (!mCacheChilds)
-		{
-			mCacheChilds = make_shared<unordered_map<string, weak_ptr<Handler>>>();
-		}
-
-		(*mCacheChilds)[url] = obj;
-	}
-
-	return obj;
-	#endif
-
 	return nullptr;
 }
 
 shared_ptr<Handler> tagHandlerData::GetChild_Impl(LONG_PTR id)
 {
-	/*
-	//assert(id);
-	assert(mHandler->isSelfLooper());
-
-	for (auto& iter:mChildren)
-	{
-		auto item = iter.second.lock();
-		if (item && item->GetId() == id)
-		{
-			return item;
-		}
-	}
-	*/
-
 	return nullptr;
 }
 
@@ -560,179 +399,7 @@ void tagHandlerData::SetName(const string& name)
 
 void tagHandlerData::Dump(int level, bool includingChild)
 {
-	#if 0
-	//#ifdef _DEBUG
-	string indent;
-	for (int i = 0; i < level; ++i)
-	{
-		indent += StringTool::Format("    ");
-	}
-
-	if (includingChild && mChildren.size()>0)
-	{
-		LogV(TAG,"%s%s#begin", indent.c_str(), mHandler->GetObjectName().c_str());
-		{
-			for (auto iter = mChildren.begin(); iter != mChildren.end();)
-			{
-				auto child = iter->second.lock();
-				if (child)
-				{
-					if (child->isLooper())
-					{
-						if (!child->MaybeLongBlock())
-						{
-							auto looper = dynamic_pointer_cast<Looper>(child);
-							//LogV(TAG,"this=0x%08x,looper=0x%08x(%s)", this,looper.get(),looper->mObjectName.c_str());
-							looper->postMessage(BM_DUMP, (WPARAM)(long)(level + 1),(LPARAM)includingChild);//这里用sendMessage可能导致死锁,见2016.12.13文档//
-						}
-					}
-					else
-					{
-						child->mInternalData->Dump(level + 1);
-					}
-
-					++iter;
-				}
-				else
-				{
-					auto iterSave = iter;
-					++iter;
-					mChildren.erase(iterSave);
-				}
-			}
-		}
-		LogV(TAG,"%s%s#end", indent.c_str(), mHandler->GetObjectName().c_str());
-	}
-	else
-	{
-		string extraInfo;
-		if (mIsLooper)
-		{
-			auto looper = dynamic_pointer_cast<Looper>(mHandler->shared_from_this());
-			if (looper)
-			{
-				if (looper->mLooperInternalData->mAttachThread)
-				{
-					extraInfo += ",AttachThread.Looper";
-				}
-			}
-		}
-
-		LogV(TAG,"%s%s,this=0x%08x,url=[%s]%s", indent.c_str(), mHandler->GetObjectName().c_str(), this, mHandler->GetUrl().c_str(), extraInfo.c_str());
-	}
-	#endif
 }
-
-#ifdef _CONFIG_MONITOR_HANDLER
-void tagHandlerData::DumpAll()
-{
-	AutoLock lock(&gCSBaseHandler);
-	if (gHandlers.empty())
-	{
-		LogV(TAG,"%s# is empty", __func__);
-	}
-	else
-	{
-		LogW(TAG,"%s#begin,", __func__);
-		for (auto& iter :gHandlers)
-		{
-			Handler *obj = (Handler *)iter.second;
-			if (obj)
-			{
-				bool includingChild = false;
-				obj->mInternalData->Dump(0,includingChild);
-			}
-		}
-		LogW(TAG, "%s#end", __func__);
-	}
-}
-
-struct tagItem
-{
-	string name;
-	int count = 0;
-	ULONGLONG bytes = 0;
-};
-
-static bool
-handler_compareCount(tagItem& item1, tagItem& item2)
-{
-	return item1.count > item2.count;
-}
-static bool
-handler_compareBytes(tagItem& item1, tagItem& item2)
-{
-	return item1.bytes > item2.bytes;
-}
-
-int tagHandlerData::fetchHandlerInfo(JsonObject& json)
-{
-#ifdef _MSC_VER
-	AutoLock lock(&gCSBaseHandler);
-
-	map<string, tagItem> handlerCounts;//统计相同name的个数
-	for (auto& iter : gHandlers)
-	{
-		Handler* obj = (Handler*)iter.second;
-		if (obj)
-		{
-			auto bytes = obj->memoryUsed();
-
-			auto name = obj->GetObjectName();
-			auto& item = handlerCounts[name];
-			item.name = name;
-			item.count++;
-			item.bytes += bytes;
-		}
-	}
-
-	vector <tagItem> items;
-	items.reserve(handlerCounts.size());
-	for (auto& item : handlerCounts)
-	{
-		items.emplace_back(tagItem{ item.first,item.second.count,item.second.bytes });
-	}
-	
-	{
-		sort(items.begin(), items.end(), handler_compareCount);
-
-		auto& jItems = json.createNestedArray("itemCounts");
-		for (auto& item : items)
-		{
-			auto& jItem = jItems.createNestedObject();
-			jItem["name"] = item.name;
-			jItem["count"] = item.count;
-		}
-	}
-	{
-		sort(items.begin(), items.end(), handler_compareBytes);
-
-		auto& jItems = json.createNestedArray("itemBytes");
-		for (auto& item : items)
-		{
-			auto& jItem = jItems.createNestedObject();
-			jItem["name"] = item.name;
-			jItem["bytes"] = item.bytes;
-		}
-	}
-#endif
-
-	return 0;
-}
-
-//返回handler总数
-//如果count持续上升，超过合理范围，说明有handler泄漏
-int tagHandlerData::GetHandlerCount()
-{
-	AutoLock lock(&gCSBaseHandler);
-	return (int)gHandlers.size();
-}
-
-void tagHandlerData::SetRationalHandlerUpperLimit(int count)
-{
-	gRationalHandlerUpperLimit = count;
-}
-#endif
 
 //gc时如果没能成功析构Handler,可能多次调用本接口
 //可用来检测不能及时析构的Handler

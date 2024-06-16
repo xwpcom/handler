@@ -45,7 +45,7 @@ struct tagLooperData
 	long mEverMaxMessages;
 	#endif
 
-	//vector<shared_ptr<Event>>	mExitEvents;
+	vector<shared_ptr<Event>>	mExitEvents;
 	weak_ptr<Looper>			mOwnerLooper;
 	long						mExitCode = 0;
 	long						mTimerCheckQuitLooper = 0;

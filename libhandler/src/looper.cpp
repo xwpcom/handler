@@ -33,7 +33,7 @@ Looper::~Looper()
 		setMainLooper(nullptr);
 	}
 
-	if (currentLooper())
+	if (mLooperData->mStarted && currentLooper())
 	{
 		if (currentLooper() == this)
 		{
@@ -47,9 +47,54 @@ Looper::~Looper()
 				logW(mTag) << "cross thread destroy TLS looper,maybe left obsolete raw pointer,it is very dangerous!";
 			}
 
-			logW(mTag) << getName(), " is NOT current looper", currentLooper();
+			logW(mTag) << getName()<< " is NOT current looper "<< currentLooper();
 		}
 	}
+
+	LONGLONG tick = 0;
+	if (mLooperData->mTickStartQuit)
+	{
+		tick = tickCount() - mLooperData->mTickStartQuit;
+	}
+
+	logV(mTag)<<__func__<< "this="<<this<<",quit tick="<<tick;
+
+	assert(!mLooperData->mLooperRunning);
+	assert(mLooperData->mExitEvents.size() == 0);
+
+	if (mLooperHandle != (HANDLE)INVALID_HANDLE_VALUE)
+	{
+		CloseHandle(mLooperHandle);
+		mLooperHandle = (HANDLE)INVALID_HANDLE_VALUE;
+	}
+
+	auto& msgList = mLooperData->mMessageList;
+	bool messageEmpty = msgList.empty();
+
+	if (!messageEmpty)
+	{
+		bool fatalError = true;
+		auto nc = msgList.size();
+		tagLooperMessage msg;
+		if (nc == 1)
+		{
+			msg = msgList.front();
+			if (msg.cmd == BM_NULL)
+			{
+				fatalError = false;
+			}
+		}
+
+		if (fatalError)
+		{
+			logW(mTag)<< "fatal error,message pending in queue,please check app logic,nc="<< nc;
+			if (!mLooperData->mAttachThread)
+			{
+				assert(FALSE);
+			}
+		}
+	}
+
 }
 
 static Looper* gMainLooper = nullptr;
@@ -225,14 +270,14 @@ int Looper::getMessage(tagLooperMessage& msg)
 bool Looper::canQuit()
 {
 	assert(mLooperData->mBMQuit);
-	#if 0
+	#if 1
 	auto& events = mLooperData->mExitEvents;
 	while (events.size())
 	{
 		#ifdef _MSC_VER
 		BOOL waitAll = TRUE;
 		HANDLE arr[MAXIMUM_WAIT_OBJECTS];
-		if (events.size() <= COUNT_OF(arr))
+		if (events.size() <= _countof(arr))
 		{
 			for (UINT i = 0; i < events.size(); i++)
 			{
@@ -287,14 +332,14 @@ bool Looper::canQuit()
 
 	{
 		ULONGLONG tick = mLooperData->mTickStartQuit;
-		ULONGLONG tickNow = ShellTool::GetTickCount64();
+		ULONGLONG tickNow = tickCount();
 		int ms = 3000;
 		if (tickNow >= tick + ms && tickNow >= mLooperData->mTickDump + ms)
 		{
 			mLooperData->mTickDump = tickNow;
 
-			LogV(TAG, "after emit quit %d ms,following handlers still alive:", ms);
-			mInternalData->Dump(0);//dump which object are still live
+			logV(mTag)<< "after emit quit "<<ms<<" ms,some handlers still alive";
+			//mInternalData->Dump(0);//dump which object are still live
 		}
 	}
 	#endif
@@ -1124,5 +1169,9 @@ void Looper::onTimer(Timer_t id)
 	__super::onTimer(id);
 }
 
+shared_ptr<Event> Looper::createExitEvent()
+{
+	return nullptr;
+}
 
 }

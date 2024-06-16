@@ -157,6 +157,8 @@ TEST_CASE("Looper.mainLooper") {
 		{
 			__super::onCreate();
 
+			Looper obj;
+
 			setTimer(mTimer_test, 1000);
 		}
 
@@ -362,7 +364,7 @@ TEST_CASE("Looper.childLooper") {
 		}
 	};
 
-	for (int i = 0; i < 1; i++)
+	for (int i = 0; i < 10; i++)
 	{
 		{
 			auto obj = make_shared<AppLooper>();

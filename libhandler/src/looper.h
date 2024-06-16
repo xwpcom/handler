@@ -23,6 +23,8 @@ public:
 	int64_t sendMessage(uint32_t cmd, int64_t wp = 0, int64_t lp = 0);
 	int64_t sendMessage(shared_ptr<Handler> handler, int32_t msg, int64_t wp, int64_t lp);
 	int64_t postMessage(shared_ptr<Handler>handler, int32_t msg, int64_t wp, int64_t lp);
+
+	virtual LOOPER_SAFE shared_ptr<Event> createExitEvent();
 protected:
 	virtual int64_t onMessage(uint32_t msg, int64_t wp = 0, int64_t lp = 0);
 	void onBMQuit();
