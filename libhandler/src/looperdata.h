@@ -1,7 +1,6 @@
 ﻿#pragma once
 #include <thread>
 #include <mutex>
-#include "event.h"
 #include "handlerdata.h"
 namespace Bear {
 class Looper;

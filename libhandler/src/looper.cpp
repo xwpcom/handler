@@ -303,6 +303,7 @@ void Looper::assertLooper()
 
 void Looper::onCreate()
 {
+	__super::onCreate();
 }
 
 void Looper::start()
@@ -478,7 +479,7 @@ bool Looper::postQueuedCompletionStatus(HANDLE handle, int32_t bytes, void* key 
 
 int64_t Looper::sendMessage(shared_ptr<Handler> handler, int32_t msg, int64_t wp, int64_t lp)
 {
-	if (!mLooperData->mLooperRunning)
+	if (mLooperData->mStarted &&  !mLooperData->mLooperRunning)
 	{
 		//assert(FALSE);
 		logW(mTag)<<"looper is NOT running,skip msg "<<msg;

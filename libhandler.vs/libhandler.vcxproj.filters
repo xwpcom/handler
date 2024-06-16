@@ -36,9 +36,6 @@
     <ClInclude Include="..\libhandler\src\libhandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\libhandler\src\log.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\libhandler\src\looper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -84,9 +81,6 @@
     <ClInclude Include="..\libhandler\src\bytetool.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\libhandler\src\event.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\libhandler\src\stringtool.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -102,9 +96,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\libhandler\src\handler.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\libhandler\src\log.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\libhandler\src\looper.cpp">
@@ -132,9 +123,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\libhandler\src\bytetool.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\libhandler\src\event.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\libhandler\src\stringtool.cpp">

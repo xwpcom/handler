@@ -21,7 +21,7 @@ public:
 	Handler();
 	virtual ~Handler();
 
-	virtual void create(shared_ptr<Handler> parent=nullptr);
+	virtual int create(Handler* parent);
 	virtual void destroy();
 	virtual int addChild(weak_ptr<Handler> obj);
 	shared_ptr<Handler> parent()const;

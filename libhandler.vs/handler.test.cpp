@@ -2,7 +2,7 @@
 #include <future>
 #include "loger.h"
 #include "looper.h"
-
+#include "system.h"
 #include <iostream>                // cout
 #include <thread>                // thread
 #include <mutex>                // mutex, unique_lock
@@ -262,6 +262,7 @@ TEST_CASE("Looper.createHandler")
 			void onCreate()
 			{
 				__super::onCreate();
+				logV(mTag) << __func__ << "this=" << this;
 				setTimer(mTimer_delayExit, 1000);
 			}
 
@@ -281,8 +282,8 @@ TEST_CASE("Looper.createHandler")
 			__super::onCreate();
 
 			auto obj = make_shared<DemoHandler>();
-			addChild(obj);
-			//obj->create();
+			//obj->create(this);
+			obj->create(this);
 		}
 
 	};
@@ -298,9 +299,6 @@ TEST_CASE("Looper.Handler") {
 	{
 	};
 
-	//make_shared<AppLooper>()->start();
-
-	//REQUIRE(2 == 1);
 }
 
 TEST_CASE("Looper.childLooper") {
@@ -372,5 +370,74 @@ TEST_CASE("Looper.childLooper") {
 		}
 
 		//Sleep(1000);
+	}
+}
+
+TEST_CASE("Looper.sendMessage") 
+{
+
+	class AppLooper :public MainLooper
+	{
+		Timer_t mTimer_test = 0;
+
+		void onCreate()
+		{
+			__super::onCreate();
+
+			setTimer(mTimer_test, 3*1000);
+
+			class DemoLooper :public Looper
+			{
+			public:
+				DemoLooper() {
+					//logV(mTag) << __func__ << " this=" << this;
+				}
+				~DemoLooper() {
+					//logV(mTag) << __func__ << " this=" << this;
+				}
+
+			protected:
+				void onCreate()
+				{
+					__super::onCreate();
+
+				}
+			};
+
+			auto obj = make_shared<DemoLooper>();
+			addChild(obj);
+			obj->start();
+
+			auto tick = tickCount();
+			int count = 1000*50;// *1000;
+			for (int i = 0; i < count; i++)
+			{
+				obj->sendMessage(BM_NULL);
+			}
+
+			tick = tickCount()-tick;
+			logV(mTag) << "count = " << count << ",tick=" << tick;
+		}
+
+		void onTimer(Timer_t id)
+		{
+			if (id == mTimer_test)
+			{
+				static int idx = 0;
+				++idx;
+				logV(mTag) << "idx=" << idx;
+				postQuitMessage(0);
+				return;
+			}
+
+			__super::onTimer(id);
+		}
+
+	};
+
+	for (int i = 0; i < 1; i++)
+	{
+		auto obj = make_shared<AppLooper>();
+		obj->start();
 	}
 }

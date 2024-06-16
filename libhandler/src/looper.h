@@ -80,7 +80,7 @@ private:
 	friend class SmartTlsLooperManager;
 };
 
-//同一时间最多只应该有一个实例
+//同一时间最多只应该有一个MainLooper对象
 class MainLooper :public Looper {
 public:
 	MainLooper()
@@ -101,13 +101,6 @@ public:
 
 		bool newThread = false;
 		startHelper(newThread);
-
-		/*
-		if (getMainLooper() == this)
-		{
-			setMainLooper(nullptr);
-		}
-		*/
 	}
 
 };

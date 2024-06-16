@@ -24,6 +24,7 @@ struct tagLoopMessage
 	int64_t* mLP=nullptr;
 };
 
+/*
 //XiongWanPing 2016.01.08
 //Loop抽象类提供外界调用的接口
 class Loop :public Handler
@@ -59,4 +60,6 @@ private:
 	virtual long SetTimerEx(shared_ptr<Handler>handler, int64_t interval, shared_ptr<tagTimerExtraInfo> extraInfo) = 0;
 	virtual long SetTimerEx(Handler *handler, int64_t interval, shared_ptr<tagTimerExtraInfo> extraInfo) = 0;
 };
+*/
+
 }

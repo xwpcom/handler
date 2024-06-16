@@ -3,8 +3,6 @@
 #include "timernode.h"
 #include "timerextrainfo.h"
 
-//#define _CONFIG_MONITOR_HANDLER	//用来测试object leaks
-
 namespace Bear {
 
 struct tagCancelRunnable

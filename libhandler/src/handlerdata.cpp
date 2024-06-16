@@ -17,16 +17,7 @@ namespace Bear {
 //#define _TEST_TIMER_ID_REWIND	//测试timerId回绕
 #endif
 
-#ifdef _CONFIG_MONITOR_HANDLER
-CriticalSection tagHandlerData::gCSBaseHandler;
-std::unordered_map<long*, long*> tagHandlerData::gHandlers;
-int tagHandlerData::gRationalHandlerUpperLimit = 0;// 1000;
-#endif
-
 static recursive_mutex	gInternalDataCS;
-//目前仅在如下场景用到:AddChildHelper，用来避免多个looper同时对同一handler调用AddChild引起竞争
-//Get/SetObjectName,保证跨looper访问mObjectName的安全
-//AddChild/GetObjectName/SetObjectName都不会被非常频繁的调用，所以不太可能是瓶颈
 
 tagHandlerData::tagHandlerData(Handler* handler)
 {

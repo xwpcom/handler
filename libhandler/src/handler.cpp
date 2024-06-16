@@ -436,18 +436,30 @@ void Handler::killTimer(Timer_t& timerId)
 //所以约定BM_CREATE是可选的
 //考虑到一般都会调用addChild,所以在addChild()中会适时触发BM_CREATE
 //注意有可能跨looper来调用create或addChild,所以BM_CREATE都采用sendMessage来触发
-void Handler::create(shared_ptr<Handler> parent)
+int Handler::create(Handler* parent)
 {
-	auto ret = -1;
+	shared_ptr<Handler> parentObj;
 	if (parent)
 	{
-		ret = parent->addChild(shared_from_this());
+		parentObj = parent->shared_from_this();
+	}
+	auto ret = -1;
+	if (parentObj)
+	{
+		ret = parentObj->addChild(shared_from_this());
 	}
 
 	if (ret == 0 && !mInternalData->mCreated)
 	{
 		sendMessage(BM_CREATE);
 	}
+
+	if (!mInternalData->mCreated)
+	{
+		logW(mTag) << __func__ << " fail";
+	}
+
+	return mInternalData->mCreated ? 0 : -1;
 }
 
 void Handler::destroy()

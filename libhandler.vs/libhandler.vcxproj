@@ -132,11 +132,9 @@
     <ClInclude Include="..\depends\wepoll\wepoll.h" />
     <ClInclude Include="..\libhandler\src\bytebuffer.h" />
     <ClInclude Include="..\libhandler\src\bytetool.h" />
-    <ClInclude Include="..\libhandler\src\event.h" />
     <ClInclude Include="..\libhandler\src\handler.h" />
     <ClInclude Include="..\libhandler\src\handlerdata.h" />
     <ClInclude Include="..\libhandler\src\libhandler.h" />
-    <ClInclude Include="..\libhandler\src\log.h" />
     <ClInclude Include="..\libhandler\src\loger.h" />
     <ClInclude Include="..\libhandler\src\loghandler_dt.h" />
     <ClInclude Include="..\libhandler\src\loop.h" />
@@ -159,10 +157,8 @@
   <ItemGroup>
     <ClCompile Include="..\libhandler\src\bytebuffer.cpp" />
     <ClCompile Include="..\libhandler\src\bytetool.cpp" />
-    <ClCompile Include="..\libhandler\src\event.cpp" />
     <ClCompile Include="..\libhandler\src\handler.cpp" />
     <ClCompile Include="..\libhandler\src\handlerdata.cpp" />
-    <ClCompile Include="..\libhandler\src\log.cpp" />
     <ClCompile Include="..\libhandler\src\loger.cpp" />
     <ClCompile Include="..\libhandler\src\loghandler_dt.cpp" />
     <ClCompile Include="..\libhandler\src\looper.cpp" />
