@@ -323,9 +323,10 @@ void Handler::assertLooper()const
 
 	assert(isSelfLooper());
 }
+
 string Handler::getName()const
 {
-	assertLooper();
+	//assertLooper();
 	return mInternalData->GetName();
 }
 

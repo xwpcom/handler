@@ -30,6 +30,7 @@ struct tagLooperData
 	void gc();
 
 	Looper* mLooper = nullptr;
+	bool				mStarted = false;
 	bool				mLooperRunning = false;//looper数量不会很多，所以没有必要用bit field
 	bool				mAttachThread = false;//不创建_WorkThreadCB线程，而是attach到其他线程中
 	bool				mBMQuit = false;//是否已收到BM_QUIT消息

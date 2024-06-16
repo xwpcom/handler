@@ -15,26 +15,15 @@
 using namespace Bear;
 static const char* TAG = "test";
 
-class Break
+class CDebugBreak
 {
 public:
-	~Break() {
+	~CDebugBreak() {
 		int x = 0;
 	}
 };
 
-static Break gBreak;
-
-TEST_CASE("Handler") {
-
-	class AppLooper :public MainLooper
-	{
-	};
-
-	//make_shared<AppLooper>()->start();
-
-	//REQUIRE(2 == 1);
-}
+static CDebugBreak gBreak;
 
 TEST_CASE("Thread") {
 
@@ -158,7 +147,7 @@ TEST_CASE("mutex")
 		th.join();
 }
 
-TEST_CASE("Looper_mainLooper") {
+TEST_CASE("Looper.mainLooper") {
 
 	class AppLooper :public MainLooper
 	{
@@ -187,14 +176,15 @@ TEST_CASE("Looper_mainLooper") {
 
 	};
 
-	for(int i=0;i<1;i++)
+	for(int i=0;i<2;i++)
 	{
 		auto obj = make_shared<AppLooper>();
 		obj->start();
 	}
 }
 
-TEST_CASE("Looper_addChild") {
+TEST_CASE("Looper.addChild")
+{
 
 	class AppLooper :public MainLooper
 	{
@@ -246,7 +236,8 @@ TEST_CASE("Looper_addChild") {
 	obj->start();
 }
 
-TEST_CASE("createHandler") {
+TEST_CASE("Looper.createHandler") 
+{
 
 	class AppLooper :public MainLooper
 	{
@@ -297,4 +288,87 @@ TEST_CASE("createHandler") {
 
 	auto obj = make_shared<AppLooper>();
 	obj->start();
+}
+
+TEST_CASE("Looper.Handler") {
+
+	class AppLooper :public MainLooper
+	{
+	};
+
+	//make_shared<AppLooper>()->start();
+
+	//REQUIRE(2 == 1);
+}
+
+TEST_CASE("Looper.childLooper") {
+
+	class AppLooper :public MainLooper
+	{
+		string mTasg = "AppLooper";
+	public:
+		AppLooper()
+		{
+			logV(mTag) << __func__ << " this=" << this;
+		}
+		~AppLooper()
+		{
+			logV(mTag) << __func__ << " this=" << this;
+		}
+
+	protected:
+		void onCreate()
+		{
+			__super::onCreate();
+
+
+			class DemoLooper :public Looper
+			{
+			public:
+				DemoLooper() {
+					logV(mTag) << __func__ << " this=" << this;
+				}
+				~DemoLooper() {
+					logV(mTag) << __func__ << " this=" << this;
+				}
+
+			protected:
+				void onCreate()
+				{
+					__super::onCreate();
+
+					setTimer(mTimer_delayExit, 100);
+				}
+
+				Timer_t mTimer_delayExit = 0;
+				void onTimer(Timer_t id)
+				{
+					if (id == mTimer_delayExit)
+					{
+						logV(mTag) << "postQuit";
+						getMainLooper()->sendMessage(BM_NULL);
+						getMainLooper()->postQuitMessage();
+						return;
+					}
+
+					__super::onTimer(id);
+				}
+
+			};
+
+			auto obj = make_shared<DemoLooper>();
+			addChild(obj);
+			obj->start();
+		}
+	};
+
+	for (int i = 0; i < 1; i++)
+	{
+		{
+			auto obj = make_shared<AppLooper>();
+			obj->start();
+		}
+
+		//Sleep(1000);
+	}
 }

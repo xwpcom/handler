@@ -13,49 +13,21 @@
 namespace Bear {
 
 static __declspec(thread) Looper * gBaseLooper = NULL;
-
+static const char* TAG = "looper";
 Looper::Looper()
 {
-	mTag = "looper";
+	mTag = TAG;
 	mLooperData = make_unique<tagLooperData>(this);
-	//mLooperData->mLooper = this;
 	mInternalData->mIsLooper = true;
 	mInternalData->SetActiveObject();
 	mLooperTick = tickCount();
-}
 
-static Looper* gMainLooper = nullptr;
-Looper* Looper::getMainLooper()
-{
-	return gMainLooper;
-}
-
-bool Looper::isMainLooper(Looper* looper)
-{
-	return gMainLooper == looper;
-}
-
-int Looper::setMainLooper(Looper* looper)
-{
-	if (looper)
-	{
-		//LogV(TAG,"%s,name=%s", __func__, looper->mThreadName.c_str());
-
-		if (gMainLooper)
-		{
-			assert(false);
-			return -1;
-		}
-
-	}
-
-	gMainLooper = looper;
-	return 0;
+	logV(mTag) << __func__ << ",this=" << this;
 }
 
 Looper::~Looper()
 {
-	logV(mTag) << __func__ <<",this=" << this;
+	logV(mTag) << __func__ << ",this=" << this;
 	if (getMainLooper() == this)
 	{
 		setMainLooper(nullptr);
@@ -72,12 +44,41 @@ Looper::~Looper()
 		{
 			if (mLooperData->mAttachThread)
 			{
-				logW(mTag)<<"cross thread destroy TLS looper,maybe left obsolete raw pointer,it is very dangerous!";
+				logW(mTag) << "cross thread destroy TLS looper,maybe left obsolete raw pointer,it is very dangerous!";
 			}
 
-			logW(mTag)<< getName()," is NOT current looper", currentLooper();
+			logW(mTag) << getName(), " is NOT current looper", currentLooper();
 		}
 	}
+}
+
+static Looper* gMainLooper = nullptr;
+Looper* Looper::getMainLooper()
+{
+	return gMainLooper;
+}
+
+bool Looper::isMainLooper(Looper* looper)
+{
+	return gMainLooper == looper;
+}
+
+int Looper::setMainLooper(Looper* looper)
+{
+	logV(TAG)<< __func__<<" looper = "<<looper;
+	if (looper)
+	{
+
+		if (gMainLooper)
+		{
+			assert(false);
+			return -1;
+		}
+
+	}
+
+	gMainLooper = looper;
+	return 0;
 }
 
 void Looper::setCurrentLooper(Looper* looper)
@@ -300,6 +301,10 @@ bool Looper::canQuit()
 
 	//有未决事务时，应该等到所有事务完结后才能安全退出looper
 	auto nc = mInternalData->GetLiveChildrenCount();
+	if (nc == 0)
+	{
+		int x = 0;
+	}
 	return nc == 0;
 
 
@@ -317,12 +322,13 @@ void Looper::onCreate()
 
 void Looper::start()
 {
-	if (currentLooper())
+	if (mLooperData->mStarted)
 	{
 		assert(false);
 		return ;
 	}
 
+	mLooperData->mStarted = true;
 	bool newThread = true;
 	startHelper(newThread);
 }
@@ -338,6 +344,7 @@ int Looper::run()
 			AutoLock lock(mLooperData->mMutex);
 			if (mLooperData->mMessageList.size() == 0)
 			{
+				//logV(mTag) << " exit run(),this="<<this;
 				mLooperData->mLooperRunning = false;
 				break;
 			}
@@ -489,7 +496,7 @@ int64_t Looper::sendMessage(shared_ptr<Handler> handler, int32_t msg, int64_t wp
 	if (!mLooperData->mLooperRunning)
 	{
 		//assert(FALSE);
-		logW(mTag)<<"looper is NOT running,skip msg"<<msg;
+		logW(mTag)<<"looper is NOT running,skip msg "<<msg;
 		return 0;
 	}
 

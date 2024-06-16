@@ -18,6 +18,11 @@ public:
 	Looper& create(function<void()>) { return *this; }
 	bool isRunning()const;
 	int postQuitMessage(int32_t exitCode=0);
+
+	int64_t postMessage(uint32_t cmd, int64_t wp = 0, int64_t lp = 0);
+	int64_t sendMessage(uint32_t cmd, int64_t wp = 0, int64_t lp = 0);
+	int64_t sendMessage(shared_ptr<Handler> handler, int32_t msg, int64_t wp, int64_t lp);
+	int64_t postMessage(shared_ptr<Handler>handler, int32_t msg, int64_t wp, int64_t lp);
 protected:
 	virtual int64_t onMessage(uint32_t msg, int64_t wp = 0, int64_t lp = 0);
 	void onBMQuit();
@@ -48,10 +53,6 @@ protected:
 	virtual Timer_t setTimerEx(shared_ptr<Handler>handler, uint32_t interval, shared_ptr<tagTimerExtraInfo> info = nullptr);
 	virtual Timer_t setTimerEx(Handler* handler, uint32_t interval, shared_ptr<tagTimerExtraInfo> info = nullptr);
 
-	int64_t postMessage(uint32_t cmd, int64_t wp = 0, int64_t lp=0);
-	int64_t sendMessage(uint32_t cmd, int64_t wp = 0, int64_t lp = 0);
-	int64_t sendMessage(shared_ptr<Handler> handler, int32_t msg, int64_t wp, int64_t lp);
-	int64_t postMessage(shared_ptr<Handler>handler, int32_t msg, int64_t wp, int64_t lp);
 	void sendMessageHelper(tagLooperMessage& msg, Looper& looper);
 	bool postQueuedCompletionStatus(HANDLE handle=INVALID_HANDLE_VALUE, int32_t bytes=0, void* key=nullptr, LPOVERLAPPED overlapped=nullptr);
 	void _StackLooperSendMessage(tagLooperMessage& loopMsg);
@@ -99,6 +100,13 @@ public:
 
 		bool newThread = false;
 		startHelper(newThread);
+
+		/*
+		if (getMainLooper() == this)
+		{
+			setMainLooper(nullptr);
+		}
+		*/
 	}
 
 };

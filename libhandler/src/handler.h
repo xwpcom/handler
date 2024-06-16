@@ -28,7 +28,7 @@ public:
 	bool isLooper()const;
 
 	void LOOPER_SAFE setObjectName(const string& name);
-	string LOOPER_SAFE getName()const;
+	string getName()const;
 	virtual void LOOPER_SAFE asyncPost(const function<void()>&);
 	virtual void LOOPER_SAFE syncSend(const function<void()>&);
 	bool LOOPER_SAFE isSelfLooper()const;

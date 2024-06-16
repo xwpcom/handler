@@ -110,9 +110,6 @@
     <ClCompile Include="..\libhandler\src\looper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\depends\gtest\src\gtest-all.cc">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\libhandler\src\timermanager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

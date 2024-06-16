@@ -104,7 +104,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>.;../libhandler/inc;../libhandler/src;C:\tools\Visual Leak Detector\include;..\depends\gtest\include;..\depends\gtest;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;../libhandler/inc;../libhandler/src;C:\tools\Visual Leak Detector\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -157,7 +157,6 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\depends\gtest\src\gtest-all.cc" />
     <ClCompile Include="..\libhandler\src\bytebuffer.cpp" />
     <ClCompile Include="..\libhandler\src\bytetool.cpp" />
     <ClCompile Include="..\libhandler\src\event.cpp" />
