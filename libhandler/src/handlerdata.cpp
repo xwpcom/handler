@@ -162,53 +162,6 @@ int tagHandlerData::addChildHelper(weak_ptr<Handler> wpChild)
 			return -1;
 		}
 
-		/*
-		if (!mHandler->isLooper() && !child->isLooper())
-		{
-			//子handler必须和parent handler位于同一looper
-			if (mHandler->GetThreadId() != child->GetThreadId())
-			{
-				LogW(TAG,"%s fail,handler must be in the same looper as parent handler", __func__);
-				return -1;
-			}
-		}
-
-		if (!name.empty())
-		{
-			child->setObjectName(name);
-		}
-
-		auto iter = mChildren.find((long*)child.get());
-		if (iter != mChildren.end())
-		{
-			//object析构后可能在同一内存重新创建此object,所以可能运行到此
-			//不影响使用
-			//assert(FALSE);
-			//return -1;
-		}
-		*/
-
-		/*
-		if (mHandler->isLooper())
-		{
-			//子looper挂到父looper时，如果没有设定exit event,则自动设定owner looper
-			auto parentLooper = dynamic_pointer_cast<Looper>(mHandler->shared_from_this());
-			if (parentLooper)
-			{
-				assert(false);//todo
-				auto looper = dynamic_pointer_cast<Looper>(child);
-				if (looper && !looper->GetExitEvent())
-				{
-					if (!looper->GetOwnerLooper())
-					{
-						looper->SetOwnerLooper(parentLooper);
-					}
-				}
-			}
-
-		}
-		*/
-
 		if (!child->isLooper())
 		{
 			//考虑跨looper创建普通handler

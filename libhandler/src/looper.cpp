@@ -60,7 +60,6 @@ Looper::~Looper()
 	logV(mTag)<<__func__<< "this="<<this<<",quit tick="<<tick;
 
 	assert(!mLooperData->mLooperRunning);
-	assert(mLooperData->mExitEvents.size() == 0);
 
 	if (mLooperHandle != (HANDLE)INVALID_HANDLE_VALUE)
 	{
@@ -270,66 +269,7 @@ int Looper::getMessage(tagLooperMessage& msg)
 bool Looper::canQuit()
 {
 	assert(mLooperData->mBMQuit);
-	#if 1
-	auto& events = mLooperData->mExitEvents;
-	while (events.size())
-	{
-		#ifdef _MSC_VER
-		BOOL waitAll = TRUE;
-		HANDLE arr[MAXIMUM_WAIT_OBJECTS];
-		if (events.size() <= _countof(arr))
-		{
-			for (UINT i = 0; i < events.size(); i++)
-			{
-				arr[i] = events[i]->operator HANDLE();
-			}
-
-			int ret = WaitForMultipleObjects((DWORD)events.size(), arr, waitAll, 0);
-			if (ret == WAIT_OBJECT_0)
-			{
-				events.clear();
-				break;
-			}
-			else
-			{
-				return false;
-			}
-		}
-		else
-		{
-			for (UINT i = 0; i < events.size(); i++)
-			{
-				bool signal = events[i]->Wait(0);
-				//LogV(TAG,"events[%d],signal=%d",i,signal);
-				if (signal)
-				{
-				}
-				else
-				{
-					return false;
-				}
-			}
-
-			events.clear();
-		}
-		#else
-		for (UINT i = 0; i < events.size(); i++)
-		{
-			bool signal = events[i]->Wait(0);
-			//LogV(TAG,"events[%d],signal=%d",i,signal);
-			if (signal)
-			{
-			}
-			else
-			{
-				return false;
-			}
-		}
-
-		events.clear();
-		#endif
-	}
-
+	#if 0
 	{
 		ULONGLONG tick = mLooperData->mTickStartQuit;
 		ULONGLONG tickNow = tickCount();
@@ -908,24 +848,7 @@ void* Looper::_WorkThreadCB(void* p)
 	auto pThis = (Looper *)p;
 	gBaseLooper = pThis;
 
-	#ifdef _DEBUG
-	//string name = pThis->GetObjectName();
-	#endif
-
-	//auto exitEvent = pThis->mLooperData->mExitEvent;
 	auto ret = pThis->_WorkThread();
-	/*
-	if (exitEvent)
-	{
-		#ifdef _DEBUG
-
-		//LogV(TAG,"SetEvent(%s)", name.c_str());
-		//ShellTool::Sleep(3000);
-		#endif
-		exitEvent->Set();//上层可等待此事件，确认looper完全退出
-	}
-	*/
-
 	return ret;
 }
 
@@ -970,19 +893,6 @@ int Looper::startHelper(bool newThread)
 		assert(FALSE);
 		return 0;
 	}
-
-	/*
-	{
-		if (!mLooperData->mExitEvent)
-		{
-			auto owner = mLooperData->mOwnerLooper.lock();
-			if (owner)
-			{
-				SetExitEvent(owner->CreateExitEvent());
-			}
-		}
-	}
-	*/
 
 	{
 		assert(mLooperHandle == INVALID_HANDLE_VALUE);
@@ -1051,13 +961,6 @@ int64_t Looper::onMessage(uint32_t msg, int64_t wp, int64_t lp)
 		break;
 	}
 	/*
-	case BM_CREATE_EXIT_EVENT:
-	{
-		tagCreateExitEventInfo* info = (tagCreateExitEventInfo*)wp;
-		info->mEvent = CreateExitEvent_Impl();
-		return 0;
-	}
-
 	#if defined _CONFIG_PROFILER
 	case BM_PROFILER_START:
 	{
@@ -1169,9 +1072,5 @@ void Looper::onTimer(Timer_t id)
 	__super::onTimer(id);
 }
 
-shared_ptr<Event> Looper::createExitEvent()
-{
-	return nullptr;
-}
 
 }

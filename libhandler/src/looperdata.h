@@ -34,7 +34,6 @@ struct tagLooperData
 	bool				mLooperRunning = false;//looper数量不会很多，所以没有必要用bit field
 	bool				mAttachThread = false;//不创建_WorkThreadCB线程，而是attach到其他线程中
 	bool				mBMQuit = false;//是否已收到BM_QUIT消息
-	//shared_ptr<Event>	mExitEvent;//退出线程时可触发此事件
 
 	recursive_mutex	mMutex;
 	list<tagLooperMessage> 	mMessageList;
@@ -45,7 +44,6 @@ struct tagLooperData
 	long mEverMaxMessages;
 	#endif
 
-	vector<shared_ptr<Event>>	mExitEvents;
 	weak_ptr<Looper>			mOwnerLooper;
 	long						mExitCode = 0;
 	long						mTimerCheckQuitLooper = 0;
