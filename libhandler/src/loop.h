@@ -7,7 +7,7 @@
 namespace Bear {
 using namespace std;
 class Handler;
-//tagLoopMessage供外界调用时使用
+
 struct tagLoopMessage
 {
 	tagLoopMessage()

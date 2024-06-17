@@ -70,7 +70,7 @@ void tagLooperData::gc()
 				//handler已析构
 				items.erase(key);
 				handlerData->mHandler = nullptr;
-				handlerData->RemoveAllTimer();//显式清除所有timer
+				//handlerData->RemoveAllTimer();//显式清除所有timer
 			}
 		}
 	}

@@ -14,6 +14,7 @@ Handler::Handler()
 
 Handler::~Handler()
 {
+	/*
 	mInternalData->mHandler = nullptr;
 
 	{
@@ -23,6 +24,7 @@ Handler::~Handler()
 			parent->sendMessage(BM_CHILD_DTOR, (int64_t)this);
 		}
 	}
+	*/
 }
 
 void Handler::onCreate()
@@ -93,6 +95,8 @@ bool Handler::isSelfLooper()const
 
 int64_t Handler::onMessage(uint32_t msg, int64_t wp, int64_t lp)
 {
+	assertLooper();
+
 	switch (msg)
 	{
 	case BM_NULL:
@@ -158,78 +162,7 @@ int64_t Handler::onMessage(uint32_t msg, int64_t wp, int64_t lp)
 
 		return 0;
 	}
-	/*
-	case BM_DUMP:
-	{
-		mInternalData->Dump((int)(long)wp, (bool)lp);
-		return 0;
-	}
-	case BM_DUMP_ALL:
-	{
-		mInternalData->DumpAll();
-		return 0;
-	}
-	*/
-	case BM_ADD_CHILD:
-	{
-		weak_ptr<Handler>* child = (weak_ptr<Handler>*)wp;
-		//const char* name = (const char*)lp;
-		return mInternalData->addChildHelper(*child);
-	}
-	/*
-	case BM_FIND_OBJECT:
-	{
-		tagFindObjectInfo& info = *(tagFindObjectInfo*)wp;
-		string& url = *(string*)lp;
-		info.mHandler = mInternalData->FindObject_Impl(url);
-		return 0;
-	}
-	case BM_GET_CHILD:
-	{
-		tagFindObjectInfo& info = *(tagFindObjectInfo*)wp;
-		LONG_PTR id = (LONG_PTR)lp;
-		info.mHandler = mInternalData->GetChild_Impl(id);
-		return 0;
-	}
-	case BM_GET_SHORTCUT:
-	{
-		tagGetShortcut& info = *(tagGetShortcut*)wp;
-		const string& url = *(string*)lp;
-		info.mHandler = mInternalData->Shortcut_Impl(url);
-		return 0;
-	}
-	case BM_REGISTER_SHORTCUT:
-	{
-		auto name = (string*)wp;
-		auto obj = (weak_ptr<Handler>*)lp;
-		return mInternalData->RegisterShortcut_Impl(*name, *obj);
-	}
 
-	case BM_PRE_EXECUTE:
-	{
-		auto obj = dynamic_pointer_cast<AsyncTask>(shared_from_this());
-		if (obj)
-		{
-			obj->OnPreExecute();
-		}
-		return 0;
-	}
-	case BM_POST_EXECUTE:
-	{
-		auto obj = dynamic_pointer_cast<AsyncTask>(shared_from_this());
-		if (obj)
-		{
-			obj->OnPostExecute();
-		}
-		return 0;
-	}
-	*/
-	case BM_REMOVE_CHILD_WEAKREF:
-	{
-		Handler* handler = (Handler*)wp;
-		mInternalData->RemoveChildWeakRef_Impl(handler);
-		return 0;
-	}
 	case BM_POST_RUNNABLE:
 	{
 		auto info = (tagDelayedRunnable*)wp;
@@ -283,6 +216,20 @@ int64_t Handler::onMessage(uint32_t msg, int64_t wp, int64_t lp)
 		return 0;
 	}
 	/*
+	case BM_FIND_OBJECT:
+	{
+		tagFindObjectInfo& info = *(tagFindObjectInfo*)wp;
+		string& url = *(string*)lp;
+		info.mHandler = mInternalData->FindObject_Impl(url);
+		return 0;
+	}
+	case BM_GET_CHILD:
+	{
+		tagFindObjectInfo& info = *(tagFindObjectInfo*)wp;
+		LONG_PTR id = (LONG_PTR)lp;
+		info.mHandler = mInternalData->GetChild_Impl(id);
+		return 0;
+	}
 	case BM_MESSAGE:
 	{
 		auto& obj = *(shared_ptr<Message>*)wp;
@@ -380,7 +327,6 @@ int Handler::addChild(weak_ptr<Handler> child)
 		return mInternalData->addChildHelper(child);
 			 });
 	return 0;
-	//return (int)sendMessage(BM_ADD_CHILD, (WPARAM)&child, (LPARAM)name.c_str());
 }
 
 void Handler::asyncPost(const function<void()>& fn)

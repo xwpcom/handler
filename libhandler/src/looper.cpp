@@ -57,7 +57,7 @@ Looper::~Looper()
 		tick = tickCount() - mLooperData->mTickStartQuit;
 	}
 
-	logV(mTag)<<__func__<< "this="<<this<<",quit tick="<<tick;
+	logV(mTag)<<__func__<< " this="<<this<<",quit tick="<<tick;
 
 	assert(!mLooperData->mLooperRunning);
 

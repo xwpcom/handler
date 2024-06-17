@@ -32,7 +32,7 @@ tagHandlerData::tagHandlerData(Handler* handler)
 	mOnDestroyCalled = false;
 	mIsLooper = false;
 	mMaybeLongBlock = false;
-	mTimerIdRewind = false;
+	//mTimerIdRewind = false;
 
 	//LogV(TAG,"%s,this=%p", __func__, this);
 #ifdef _TEST_TIMER_ID_REWIND
@@ -55,7 +55,10 @@ tagHandlerData::~tagHandlerData()
 
 	if (mParent)
 	{
-		mParent->mInternalData->RemoveChildWeakRef(mHandler);
+		if (mHandler)
+		{
+			mParent->sendMessage(BM_CHILD_DTOR, (int64_t)mHandler);
+		}
 
 		mParent->mInternalData->mChildCount--;
 	}
@@ -219,40 +222,6 @@ shared_ptr<Handler> tagHandlerData::GetChild_Impl(LONG_PTR id)
 long tagHandlerData::GetChildCount()const
 {
 	return (long)mChildren.size();
-}
-
-void tagHandlerData::RemoveChildWeakRef(Handler *handler)
-{
-	if (mHandler->isSelfLooper())
-	{
-		RemoveChildWeakRef_Impl(handler);
-	}
-	else
-	{
-		mHandler->sendMessage(BM_REMOVE_CHILD_WEAKREF, (WPARAM)handler);
-	}
-}
-
-void tagHandlerData::RemoveChildWeakRef_Impl(Handler *handler)
-{
-	assert(mHandler->isSelfLooper());
-
-	if (!handler)
-	{
-		return;
-	}
-
-	auto iter = mChildren.find((long*)handler);
-	if (iter != mChildren.end())
-	{
-		mChildren.erase(iter);
-
-		//OnChildDetach();
-	}
-	else
-	{
-		assert(FALSE);
-	}
 }
 
 //注意:setTimer/SetTimerEx/killTimer在Handler和Looper的实现是不同的，所以这里要区分
